@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 contract FantasyFootballContract {
     struct Player {
         address id;
-        bool paid;
+        bool buyIn;
         uint winnings;
     }
 
@@ -16,6 +16,7 @@ contract FantasyFootballContract {
         uint buyIn;
         uint prizePool;
         bool started;
+        bool distributed;
         bool complete;
     }
 
@@ -25,7 +26,7 @@ contract FantasyFootballContract {
     event SeasonStarted(uint seasonId, address commissioner);
     event MemberJoined(uint seasonId, address member);
     event PlayerWin(uint seasonId, address member, uint addedWinning);
-    event SeasonCompleted(uint seasonId, address winner, uint totalWinnings);
+    event SeasonCompleted(uint seasonId, address commisioner);
 
     modifier onlyWhitelisted(uint _seasonId, address _address) {
         require(
@@ -84,7 +85,7 @@ contract FantasyFootballContract {
         );
 
         player.id = msg.sender;
-        player.paid = true;
+        player.buyIn = true;
         season.prizePool += msg.value;
 
         emit MemberJoined(_seasonId, msg.sender);
@@ -105,5 +106,38 @@ contract FantasyFootballContract {
         season.prizePool -= _winnings;
 
         emit PlayerWin(_seasonId, _player, _winnings);
+    }
+
+    function withdrawWinnings(uint _seasonId) external {
+        Season storage season = seasons[_seasonId];
+        require(season.started, "Season has not started yet");
+
+        Player storage player = season.players[msg.sender];
+        require(
+            player.id == msg.sender,
+            "You can't withdraw someone else's funds"
+        );
+
+        uint winnings = player.winnings;
+        require(winnings > 0, "No winnings to withdraw");
+
+        player.winnings = 0;
+
+        (bool success, ) = msg.sender.call{value: winnings}("");
+        require(success, "Failed to send winnings");
+
+        emit PlayerWin(_seasonId, msg.sender, winnings);
+    }
+
+    function completeSeason(
+        uint _seasonId
+    ) external onlyCommissioner(_seasonId) {
+        Season storage season = seasons[_seasonId];
+        require(!season.complete, "Season is already complete");
+        require(season.prizePool == 0, "Players still need to be paid");
+
+        season.complete = true;
+
+        emit SeasonCompleted(_seasonId, msg.sender);
     }
 }
