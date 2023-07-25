@@ -1,0 +1,15 @@
+.navbar {
+    position: fixed;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.connect {
+    margin: 0 5rem;
+}
+
+@media screen  {
+
+}
