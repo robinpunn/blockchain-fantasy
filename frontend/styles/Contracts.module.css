@@ -1,0 +1,32 @@
+.connected {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    margin: 0 5rem;
+    height: 80vh;
+  }
+
+  .search {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    margin-bottom: 0.5rem;
+  }
+
+  .search p {
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+
+  .search input {
+    width: 15rem;
+    padding: 0.5rem;
+  }
+
+  .search button {
+    /* padding: 0.5rem 2rem; */
+    margin: 0.25rem 0;
+    width: 8rem;
+  }

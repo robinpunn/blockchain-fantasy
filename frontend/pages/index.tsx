@@ -2,6 +2,7 @@ import type { NextPage } from 'next';
 import Head from 'next/head';
 import Navbar from '../components/navbar';
 import Welcome from '../components/welcome';
+import Contracts from '../components/contracts';
 import styles from '../styles/Home.module.css';
 
 
@@ -18,6 +19,7 @@ const Home: NextPage = () => {
       </Head>
       <Navbar/>
       <Welcome />
+      <Contracts/>
       {/* <main className={styles.main}>
 
       </main> */}
