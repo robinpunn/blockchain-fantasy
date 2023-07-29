@@ -6,19 +6,26 @@ import { configureChains, createConfig, WagmiConfig } from 'wagmi';
 import {
   sepolia,
 } from 'wagmi/chains';
-import { publicProvider } from 'wagmi/providers/public';
+import { alchemyProvider } from '@wagmi/core/providers/alchemy'
+import {publicProvider} from '@wagmi/core/providers/public'
+
+const alchemyApiKey = process.env.NEXT_PUBLIC_ALCHEMY!;
+const project = process.env.NEXT_PUBLIC_PROJECT_ID!;
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [
     sepolia,
     ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true' ? [sepolia] : []),
   ],
-  [publicProvider()]
+  [
+    alchemyProvider({apiKey: alchemyApiKey}),
+    publicProvider()
+  ]
 );
 
 const { connectors } = getDefaultWallets({
-  appName: 'RainbowKit App',
-  projectId: 'YOUR_PROJECT_ID',
+  appName: 'Fantasy Payments',
+  projectId: project,
   chains,
 });
 

@@ -1,12 +1,16 @@
 import type { NextPage } from 'next';
+import { useState } from 'react';
 import Head from 'next/head';
 import Navbar from '../components/navbar';
 import Welcome from '../components/welcome';
 import Contracts from '../components/contracts';
+import League from '../components/league';
 import styles from '../styles/Home.module.css';
 
 
 const Home: NextPage = () => {
+  // const [commisioner, setCommisoner] = useState(false)
+  // const [member, setMember] = useState(false)
   return (
     <div className={styles.container}>
       <Head>
@@ -20,6 +24,7 @@ const Home: NextPage = () => {
       <Navbar/>
       <Welcome />
       <Contracts/>
+      <League />
       {/* <main className={styles.main}>
 
       </main> */}

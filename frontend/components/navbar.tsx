@@ -5,7 +5,7 @@ import styles from "../styles/Navbar.module.css"
 function Navbar() {
   return (
     <div className={styles.navbar}>
-        <h1>Fantasy Payments</h1>
+        <h3>Fantasy Payments</h3>
         <div className={styles.connect}>
           <ConnectButton
             accountStatus="avatar"
