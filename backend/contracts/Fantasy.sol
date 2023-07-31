@@ -2,102 +2,151 @@
 pragma solidity ^0.8.19;
 
 contract Fantasy {
-    address public commissioner;
-    uint256 public entryFee;
-    uint256 public prizePool;
-    uint256 tip;
-    mapping(address => uint256) public winnings;
-    mapping(address => bool) public isWhitelisted;
+    uint public seasonCounter;
+    Season[] public seasons;
 
-    event JoinedLeague(address indexed member, uint256 entryFeePaid);
-    event AddWinnings(address indexed member, uint256 prize);
-    event WithdrewWinnings(address indexed member, uint256 amount);
-    event CommissionerWithdrew(address indexed commissioner, uint256 amount);
-    event TippedCommissioner(address indexed tipper, uint256 amount);
-
-    constructor(uint256 _entryFee) {
-        commissioner = msg.sender;
-        entryFee = _entryFee;
-        isWhitelisted[commissioner] = true;
+    struct Player {
+        address payable id;
+        bool paid;
+        uint winnings;
     }
 
-    modifier onlyCommissioner() {
+    struct Season {
+        uint id;
+        address payable commissioner;
+        mapping(address => bool) whitelist;
+        mapping(address => Player) players;
+        uint buyIn;
+        uint prizePool;
+        bool started;
+        bool distributed;
+        bool complete;
+    }
+
+    event SeasonStarted(uint seasonId, address commissioner);
+    event MemberJoined(uint seasonId, address member);
+    event PlayerWin(uint seasonId, address member, uint addedWinning);
+    event SeasonCompleted(uint seasonId, address commisioner);
+
+    modifier onlyWhitelisted(uint _seasonId, address _address) {
         require(
-            msg.sender == commissioner,
-            "Only the commissioner can call this function."
+            seasons[_seasonId].whitelist[_address],
+            "Address not whitelisted"
+        );
+        _;
+    }
+    modifier onlyCommissioner(uint _seasonId) {
+        require(
+            msg.sender == seasons[_seasonId].commissioner,
+            "Only commissioner can perform this action"
         );
         _;
     }
 
-    modifier onlyWhitelisted() {
-        require(
-            isWhitelisted[msg.sender],
-            "You are not whitelisted to join the league."
-        );
-        _;
+    function addSeason(uint _buyIn) external {
+        uint newSeasonId = seasonCounter;
+        Season storage newSeason = seasons.push();
+        newSeason.id = newSeasonId;
+        newSeason.buyIn = _buyIn;
+        newSeason.commissioner = payable(msg.sender);
+        newSeason.started = true;
+        newSeason.whitelist[msg.sender] = true;
+        seasonCounter++;
+        emit SeasonStarted(newSeasonId, msg.sender);
     }
 
-    function whitelistAddress(
-        address _memberAddress
-    ) external onlyCommissioner {
-        isWhitelisted[_memberAddress] = true;
+    function addToWhitelist(
+        uint _seasonId,
+        address _address
+    ) external onlyCommissioner(_seasonId) {
+        seasons[_seasonId].whitelist[_address] = true;
     }
 
-    function joinLeague() external payable onlyWhitelisted {
+    function removeFromWhitelist(
+        uint _seasonId,
+        address _address
+    ) external onlyCommissioner(_seasonId) {
+        delete seasons[_seasonId].whitelist[_address];
+    }
+
+    function buyIn(
+        uint _seasonId,
+        uint _buyIn
+    ) external payable onlyWhitelisted(_seasonId, msg.sender) {
+        Season storage season = seasons[_seasonId];
+        require(season.started, "Season has not started yet");
+        require(_buyIn == season.buyIn, "Incorrect buy-in amount");
         require(
-            msg.value >= entryFee,
-            "Insufficient payment to join the league."
+            msg.value == _buyIn,
+            "Ether sent did not match the buy-in amount"
+        );
+        Player storage player = season.players[msg.sender];
+        require(
+            player.id == address(0),
+            "Player has already joined the season"
         );
 
-        prizePool += msg.value;
+        player.id = payable(msg.sender);
+        player.paid = true;
+        season.prizePool += _buyIn;
 
-        emit JoinedLeague(msg.sender, msg.value);
+        emit MemberJoined(_seasonId, msg.sender);
     }
 
     function addWinnings(
-        address _winner,
-        uint256 _amount
-    ) external onlyCommissioner {
-        require(prizePool >= _amount, "Not enough funds in the prize pool");
+        uint _seasonId,
+        address _player,
+        uint _winnings
+    ) external onlyCommissioner(_seasonId) {
+        Season storage season = seasons[_seasonId];
+        require(season.started, "Season has not started yet");
+        Player storage player = season.players[_player];
+        require(player.id != address(0), "Player is not part of the season");
+        player.winnings += _winnings;
+        season.prizePool -= _winnings;
 
-        prizePool -= _amount;
-        winnings[_winner] += _amount;
-
-        emit AddWinnings(_winner, _amount);
+        emit PlayerWin(_seasonId, _player, _winnings);
     }
 
-    function withdrawWinnings() external {
-        uint256 amount = winnings[msg.sender];
-        require(amount > 0, "You have no winnings to withdraw.");
+    function withdrawWinnings(uint _seasonId) external {
+        Season storage season = seasons[_seasonId];
+        require(season.started, "Season has not started yet");
 
-        // Set winnings to zero before transfer to prevent re-entrancy attack
-        winnings[msg.sender] = 0;
-        payable(msg.sender).transfer(amount);
+        Player storage player = season.players[msg.sender];
+        require(
+            player.id == msg.sender,
+            "You can't withdraw someone else's funds"
+        );
 
-        emit WithdrewWinnings(msg.sender, amount);
+        uint winnings = player.winnings;
+        require(winnings > 0, "No winnings to withdraw");
+
+        (bool success, ) = msg.sender.call{value: winnings}("");
+        if (success) {
+            player.winnings = 0;
+        }
+        require(success, "Failed to send winnings");
+
+        emit PlayerWin(_seasonId, msg.sender, winnings);
     }
 
-    function tipCommish() external payable {
-        require(msg.value > 0, "Tip needs to be greater than 0");
+    function completeSeason(
+        uint _seasonId
+    ) external onlyCommissioner(_seasonId) {
+        Season storage season = seasons[_seasonId];
+        require(!season.complete, "Season is already complete");
+        require(season.prizePool == 0, "Players still need to be paid");
 
-        emit TippedCommissioner(msg.sender, msg.value);
+        season.complete = true;
+
+        emit SeasonCompleted(_seasonId, msg.sender);
     }
 
-    function withdrawTip() external onlyCommissioner {
-        require(tip > 0, "No tips to withdraw");
-
-        uint256 tipAmount = tip;
-        tip = 0;
-        payable(commissioner).transfer(tipAmount);
-
-        emit CommissionerWithdrew(commissioner, tipAmount);
-    }
-
-    function getContractBalance() external view returns (uint256) {
+    function getBalance() public view returns (uint) {
         return address(this).balance;
     }
+
+    receive() external payable {}
+
+    fallback() external payable {}
 }
-
-// deployed to 0x2F6B385330C888D326e1f4F39764D0B68EE792Ce
-
-// https://sepolia.etherscan.io/address/0x2F6B385330C888D326e1f4F39764D0B68EE792Ce#code
