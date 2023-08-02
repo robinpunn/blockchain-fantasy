@@ -23,10 +23,15 @@ contract Fantasy {
         bool complete;
     }
 
-    event SeasonStarted(uint seasonId, address commissioner);
-    event MemberJoined(uint seasonId, address member);
-    event PlayerWin(uint seasonId, address member, uint addedWinning);
-    event SeasonCompleted(uint seasonId, address commisioner);
+    event SeasonStarted(uint indexed seasonId, address indexed commissioner);
+    event Whitelisted(uint indexed seasonId, address indexed member);
+    event MemberJoined(uint indexed seasonId, address indexed member);
+    event PlayerWin(
+        uint indexed seasonId,
+        address indexed member,
+        uint indexed addedWinning
+    );
+    event SeasonCompleted(uint indexed seasonId, address indexed commisioner);
 
     modifier onlyWhitelisted(uint _seasonId, address _address) {
         require(
@@ -53,6 +58,7 @@ contract Fantasy {
         newSeason.whitelist[msg.sender] = true;
         seasonCounter++;
         emit SeasonStarted(newSeasonId, msg.sender);
+        emit Whitelisted(newSeasonId, msg.sender);
     }
 
     function addToWhitelist(
@@ -60,6 +66,7 @@ contract Fantasy {
         address _address
     ) external onlyCommissioner(_seasonId) {
         seasons[_seasonId].whitelist[_address] = true;
+        emit Whitelisted(_seasonId, _address);
     }
 
     function removeFromWhitelist(
@@ -142,7 +149,21 @@ contract Fantasy {
         emit SeasonCompleted(_seasonId, msg.sender);
     }
 
-    function getBalance() public view returns (uint) {
+    function getSeasonPrizePool(uint _seasonId) external view returns (uint) {
+        return seasons[_seasonId].prizePool;
+    }
+
+    function getSeasonCommissioner(
+        uint _seasonId
+    ) external view returns (address) {
+        return seasons[_seasonId].commissioner;
+    }
+
+    function getSeasonWinnings(uint _seasonId) external view returns (uint) {
+        return seasons[_seasonId].players[msg.sender].winnings;
+    }
+
+    function getBalance() external view returns (uint) {
         return address(this).balance;
     }
 

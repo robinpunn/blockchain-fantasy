@@ -3,16 +3,12 @@ import { useState } from 'react';
 import Head from 'next/head';
 import Navbar from '../components/navbar';
 import Welcome from '../components/welcome';
-import Contracts from '../components/contracts';
-import League from '../components/league';
-import styles from '../styles/Home.module.css';
+
 
 
 const Home: NextPage = () => {
-  // const [commisioner, setCommisoner] = useState(false)
-  // const [member, setMember] = useState(false)
   return (
-    <div className={styles.container}>
+    <>
       <Head>
         <title>Fantasy Payments</title>
         <meta
@@ -23,18 +19,7 @@ const Home: NextPage = () => {
       </Head>
       <Navbar/>
       <Welcome />
-      <Contracts/>
-      <League />
-      {/* <main className={styles.main}>
-
-      </main> */}
-
-      {/* <footer className={styles.footer}>
-        <a href="https://rainbow.me" rel="noopener noreferrer" target="_blank">
-          Made with ❤️ by your frens at 🌈
-        </a>
-      </footer> */}
-    </div>
+    </>
   );
 };
 
