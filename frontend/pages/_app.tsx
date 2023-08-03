@@ -8,6 +8,7 @@ import {
 } from 'wagmi/chains';
 import { alchemyProvider } from '@wagmi/core/providers/alchemy'
 import {publicProvider} from '@wagmi/core/providers/public'
+import { IDProvider } from '../context/IDContext';
 
 const alchemyApiKey = process.env.NEXT_PUBLIC_ALCHEMY!;
 const project = process.env.NEXT_PUBLIC_PROJECT_ID!;
@@ -38,11 +39,13 @@ const wagmiConfig = createConfig({
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider modalSize="compact" chains={chains} theme={midnightTheme()}>
-        <Component {...pageProps} />
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <IDProvider>
+      <WagmiConfig config={wagmiConfig}>
+        <RainbowKitProvider modalSize="compact" chains={chains} theme={midnightTheme()}>
+          <Component {...pageProps} />
+        </RainbowKitProvider>
+      </WagmiConfig>
+    </IDProvider>
   );
 }
 

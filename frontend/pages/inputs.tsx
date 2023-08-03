@@ -8,12 +8,12 @@ import styles from "../styles/Contracts.module.css"
 const Inputs = () => {
   return (
     <>
-    <Navbar/>
-    <div className={styles.connected}>
-        <FindLeague/>
-        <AddLeague />
-        <BuyIn />
-    </div>
+      <Navbar/>
+      <main className={styles.connected}>
+          <FindLeague/>
+          <AddLeague />
+          <BuyIn />
+      </main>
     </>
   )
 }

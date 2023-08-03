@@ -4,12 +4,12 @@ import styles from '../styles/League.module.css'
 const LeagueInfo = () => {
   return (
     <>
-      <div className={styles.id}>
+      <section className={styles.id}>
           <p>League Id</p>
-      </div>
-      <div className={styles.prizepool}>
+      </section>
+      <section className={styles.prizepool}>
           <p>Prize Pool</p>
-      </div>
+      </section>
     </>
   )
 }
