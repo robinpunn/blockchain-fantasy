@@ -1,0 +1,19 @@
+.league {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content:right;
+    align-items:flex-start;
+}
+
+.id {
+    margin: 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+    padding: 2rem;
+    width: 33vw;
+    text-align: center;
+}

@@ -1,12 +1,12 @@
 import React from 'react'
 import styles from '../styles/League.module.css'
 
-const Withdraw = () => {
+const Withdraw = ({data}:any) => {
   return (
-    <div className={styles.winnings}>
-        <p>Winnings</p>
-        <button>Withdraw</button>
-    </div>
+    <section className={styles.winnings}>
+      <p>Winnings: {Number(data[2].result)}</p>
+      <button>Withdraw</button>
+    </section>
   )
 }
 
