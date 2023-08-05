@@ -14,6 +14,9 @@
     align-items: center;
     justify-content: space-evenly;
     margin-bottom: 0.5rem;
+    border: 1px solid gray;
+    height: 20rem;
+    width: 20rem;
   }
 
   .search p, .search label {
@@ -30,4 +33,10 @@
     /* padding: 0.5rem 2rem; */
     margin: 0.25rem 0;
     width: 8rem;
+  }
+
+  @media (min-width:20rem) {
+    .connected {
+      flex-direction: row;
+    }
   }

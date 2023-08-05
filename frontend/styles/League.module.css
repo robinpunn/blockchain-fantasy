@@ -1,19 +1,41 @@
 .league {
-    height: 100vh;
     display: flex;
+    flex-wrap: wrap;
     flex-direction: column;
-    justify-content:right;
-    align-items:flex-start;
+    justify-content: space-around;
+    align-items: center;
+    margin: 0 5rem;
+    height: 100vh;
 }
 
 .id {
-    margin: 5rem;
+    margin: 3rem 2rem 0 2rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     border: 1px solid black;
-    padding: 2rem;
+    padding: 0.5rem;
     width: 33vw;
     text-align: center;
+}
+
+.whitelist, .add, .winnings {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    margin-bottom: 0.5rem;
+    border: 1px solid gray;
+    height: 20rem;
+    width: 20rem;
+}
+
+@media (min-width: 20rem) {
+    .actions {
+        display: flex;
+    }
+    .whitelist, .add, .winnings {
+        margin: 3.5rem;
+    }
 }

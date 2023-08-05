@@ -33,7 +33,6 @@ const FindLeague = () => {
   return (
     <form className={styles.search}>
       <h4>FIND YOUR LEAGUE</h4>
-      <label htmlFor="league">Search League:</label>
       <input
         type="text"
         placeholder="Enter League Id"

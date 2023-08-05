@@ -10,6 +10,7 @@ const contractAddress = "0x8C486D366701f03b30a8106410ed98eF1660DBa4";
 const Manager = () => {
   const [id] = useContext(IDContext);
   const [whitelistAddress, setWhitelistAddress] = useState("");
+  const [player, setPlayer] = useState("");
   const [winnings, setWinnings] = useState("");
 
   const {
@@ -42,7 +43,9 @@ const Manager = () => {
   const winSubmit = (event: any) => {
     event.preventDefault();
     if (!isWinLoading) {
-      winWrite({ args: [id, parseEther(winnings)] });
+      winWrite({
+        args: [id, player, parseEther(winnings)],
+      });
     }
   };
 
@@ -50,7 +53,6 @@ const Manager = () => {
     <>
       <form className={styles.whitelist} onSubmit={whitelistSubmit}>
         <h4>Whitelist</h4>
-        <label htmlFor="whitelist">Whitelist Member:</label>
         <input
           type="text"
           placeholder="Enter address"
@@ -63,7 +65,12 @@ const Manager = () => {
       </form>
       <form className={styles.add} onSubmit={winSubmit}>
         <h4>Handle Wins</h4>
-        <label htmlFor="winnings">Add Winnings:</label>
+        <input
+          type="text"
+          placeholder="Enter Player Address"
+          value={player}
+          onChange={(event) => setPlayer(event.target.value)}
+        />
         <input
           type="text"
           placeholder="Add win amount"

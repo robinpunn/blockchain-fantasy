@@ -41,7 +41,6 @@ const BuyIn = () => {
     <>
       <form className={styles.search} onSubmit={handleSubmit}>
         <h4>BUY IN</h4>
-        <label htmlFor="leagueId">League ID:</label>
         <input
           type="text"
           placeholder="Enter League Id"
@@ -49,7 +48,6 @@ const BuyIn = () => {
           onChange={(event) => setLeagueId(event.target.value)}
           required
         />
-        <label htmlFor="buyInAmount">Buy In:</label>
         <input
           type="text"
           placeholder="Enter Buy In"

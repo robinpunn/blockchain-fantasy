@@ -36,7 +36,6 @@ const AddLeague = () => {
   return (
     <form className={styles.search} onSubmit={handleSubmit}>
       <h4>ADD YOUR LEAGUE</h4>
-      <label htmlFor="buyIn">Set Buy In:</label>
       <input
         type="text"
         placeholder="Enter Buy In"

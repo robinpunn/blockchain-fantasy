@@ -22,3 +22,26 @@ a {
 h1 {
   font-size: 3rem;
 }
+
+input {
+  border-radius: 4px;
+  width: 15rem;
+  padding: 0.5rem;
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+}
+
+button {
+  border-radius: 4px;
+  margin: 0.25rem 0;
+  width: 8rem;
+  background-color: black;
+  border: 1px solid white;
+  color: gray;
+}
+
+button:hover {
+  color:white;
+  cursor: pointer;
+}
