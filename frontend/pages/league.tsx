@@ -12,6 +12,7 @@ import { AbiItem } from "viem";
 import styles from "../styles/League.module.css";
 
 const contract = "0x7BcF1609571b7a418aE68e42f2046338120A8f73";
+// @ts-ignore
 const abi: AbiItem[] = Fantasy.abi;
 
 const League = () => {
@@ -24,12 +25,14 @@ const League = () => {
         address: contract,
         abi: abi,
         functionName: "getSeasonCommissioner",
+        // @ts-ignore
         args: [id],
       },
       {
         address: contract,
         abi: abi,
         functionName: "getSeasonPrizePool",
+        // @ts-ignore
         args: [id],
       },
       // {
