@@ -8,13 +8,14 @@ import LeagueInfo from "../components/leagueInfo";
 import Manager from "../components/manager";
 import Withdraw from "../components/withdraw";
 import Tip from "../components/tip";
+import { AbiItem } from "viem";
 import styles from "../styles/League.module.css";
 
 const contract = "0x7BcF1609571b7a418aE68e42f2046338120A8f73";
-const abi = Fantasy.abi;
+const abi: AbiItem[] = Fantasy.abi;
 
 const League = () => {
-  const [id] = useContext(IDContext) ?? "";
+  const [id] = useContext(IDContext) ?? null;
   const { address } = useAccount();
 
   const { data } = useContractReads({
