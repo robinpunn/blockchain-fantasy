@@ -65,6 +65,7 @@ contract Fantasy {
         uint _seasonId,
         address _address
     ) external onlyCommissioner(_seasonId) {
+        require(!seasons[_seasonId].whitelist[_address], "This address is already whitelisted");
         seasons[_seasonId].whitelist[_address] = true;
         emit Whitelisted(_seasonId, _address);
     }
@@ -135,6 +136,11 @@ contract Fantasy {
         require(success, "Failed to send winnings");
 
         emit PlayerWin(_seasonId, msg.sender, winnings);
+    }
+
+    function tipCommisioner(uint _seasonId, uint _amount) external payable onlyWhitelisted(_seasonId, msg.sender){
+        (bool success, ) = seasons[_seasonId].commissioner.call{value: _amount}("");
+        require(success, "Failed to send tip");
     }
 
     function completeSeason(
