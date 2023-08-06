@@ -7,6 +7,7 @@ import Navbar from "../components/navbar";
 import LeagueInfo from "../components/leagueInfo";
 import Manager from "../components/manager";
 import Withdraw from "../components/withdraw";
+import Tip from "../components/tip";
 import styles from "../styles/League.module.css";
 
 const contract = "0x8C486D366701f03b30a8106410ed98eF1660DBa4";
@@ -48,6 +49,7 @@ const League = () => {
             <LeagueInfo data={data} />
             <section className={styles.actions}>
               <Withdraw />
+              {address !== data[0].result && <Tip />}
               {address === data[0].result && <Manager />}
             </section>
           </>
