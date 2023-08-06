@@ -5,7 +5,7 @@ import { useContractWrite, useContractRead, useWalletClient } from "wagmi";
 import Fantasy from "../artifacts/contracts/Fantasy.sol/Fantasy.json";
 import styles from "../styles/League.module.css";
 
-const contractAddress = "0x8C486D366701f03b30a8106410ed98eF1660DBa4";
+const contractAddress = "0x7BcF1609571b7a418aE68e42f2046338120A8f73";
 
 const Withdraw = () => {
   const [id] = useContext(IDContext);
@@ -31,11 +31,13 @@ const Withdraw = () => {
   };
 
   return (
-    <section className={styles.winnings}>
+    <form className={styles.winnings}>
       <h4>Withdraw Winnings</h4>
       {/* <p>Your Winnings: {formatEther(data)} ETH</p> */}
-      <button onClick={handleClick}>Withdraw</button>
-    </section>
+      <button className={styles.withdrawBtn} onClick={handleClick}>
+        Withdraw
+      </button>
+    </form>
   );
 };
 

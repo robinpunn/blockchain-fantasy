@@ -1,5 +1,4 @@
 import React, { useContext, useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { IDContext } from "../context/IDContext";
 import styles from "../styles/Inputs.module.css";
@@ -11,7 +10,6 @@ const FindLeague = () => {
 
   const handleSubmit = (event: any) => {
     event.preventDefault();
-    console.log("Submit button clicked");
 
     if (Number.isNaN(Number(inputValue))) {
       alert("Please enter a valid league ID.");
@@ -19,9 +17,7 @@ const FindLeague = () => {
     }
 
     const sanitizedId = parseInt(inputValue);
-    console.log("sani:", sanitizedId);
     setId(sanitizedId);
-    console.log("id:", id);
 
     router.push("/league");
   };

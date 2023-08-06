@@ -7,6 +7,7 @@ body {
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
     background-color: #010101;
   color: #f0f0f0;
+  caret-color: transparent;
 }
 
 a {
@@ -30,9 +31,10 @@ input {
   background-color: black;
   color: white;
   border: 1px solid white;
+  caret-color: aliceblue;
 }
 
-button {
+form > button {
   border-radius: 4px;
   margin: 0.25rem 0;
   width: 8rem;

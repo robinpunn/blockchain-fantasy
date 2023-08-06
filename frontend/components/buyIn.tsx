@@ -4,7 +4,7 @@ import { parseEther } from "ethers";
 import Fantasy from "../artifacts/contracts/Fantasy.sol/Fantasy.json";
 import styles from "../styles/Inputs.module.css";
 
-const contractAddress = "0x8C486D366701f03b30a8106410ed98eF1660DBa4";
+const contractAddress = "0x7BcF1609571b7a418aE68e42f2046338120A8f73";
 
 const BuyIn = () => {
   const [leagueId, setLeagueId] = useState("");

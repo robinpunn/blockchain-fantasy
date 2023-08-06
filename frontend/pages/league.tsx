@@ -10,7 +10,7 @@ import Withdraw from "../components/withdraw";
 import Tip from "../components/tip";
 import styles from "../styles/League.module.css";
 
-const contract = "0x8C486D366701f03b30a8106410ed98eF1660DBa4";
+const contract = "0x7BcF1609571b7a418aE68e42f2046338120A8f73";
 const abi = Fantasy.abi;
 
 const League = () => {
