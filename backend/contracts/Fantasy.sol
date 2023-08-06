@@ -31,6 +31,7 @@ contract Fantasy {
         address indexed member,
         uint indexed addedWinning
     );
+    event TippedCommissioner(uint indexed seasonId, address indexed member);
     event SeasonCompleted(uint indexed seasonId, address indexed commisioner);
 
     modifier onlyWhitelisted(uint _seasonId, address _address) {
@@ -141,6 +142,8 @@ contract Fantasy {
     function tipCommisioner(uint _seasonId, uint _amount) external payable onlyWhitelisted(_seasonId, msg.sender){
         (bool success, ) = seasons[_seasonId].commissioner.call{value: _amount}("");
         require(success, "Failed to send tip");
+
+        emit TippedCommissioner(_seasonId, msg.sender);
     }
 
     function completeSeason(
