@@ -4,13 +4,15 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    margin: 1rem;
+    margin: 0;
+    -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .connect {
-    margin: 0 5rem;
+    margin: 0 2.5rem;
 }
 
-@media screen  {
-
+.logo {
+    margin: 0 2rem;
 }

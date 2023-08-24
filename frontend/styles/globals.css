@@ -43,6 +43,16 @@ form > button {
   color: gray;
 }
 
+button {
+  border-radius: 4px;
+  margin: 0.25rem 0;
+  width: 6rem;
+  padding: 0.25rem;
+  background-color: black;
+  border: 1px solid white;
+  color: rgb(85, 81, 81);
+}
+
 button:hover {
   color:white;
   cursor: pointer;

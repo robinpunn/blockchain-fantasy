@@ -3,7 +3,7 @@ import { useContractReads } from "wagmi";
 import { useAccount } from "wagmi";
 import { IDContext } from "../context/IDContext";
 import Fantasy from "../artifacts/contracts/Fantasy.sol/Fantasy.json";
-import Navbar from "../components/navbar";
+import Layout from "../components/layout";
 import LeagueInfo from "../components/leagueInfo";
 import Manager from "../components/manager";
 import Withdraw from "../components/withdraw";
@@ -45,9 +45,8 @@ const League = () => {
   });
 
   return (
-    <>
-      <Navbar />
-      <main className={styles.league}>
+    <Layout>
+      <section className={styles.league}>
         {data && (
           <>
             <LeagueInfo data={data} />
@@ -58,8 +57,8 @@ const League = () => {
             </section>
           </>
         )}
-      </main>
-    </>
+      </section>
+    </Layout>
   );
 };
 
