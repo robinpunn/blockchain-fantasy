@@ -43,8 +43,6 @@
     color: gray;
   }
 
-
-
 @media (min-width: 40rem) {
     .actions {
         flex-direction: row;
