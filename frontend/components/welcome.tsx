@@ -18,15 +18,15 @@ const Welcome = () => {
       <article className={styles.info}>
         <section className={styles.manager}>
           <h1>Managers</h1>
-          <h4>Add your league</h4>
-          <h4>Whitelist league members</h4>
-          <h4>Add winnings</h4>
+          <h4 className={styles.text}>Add your league</h4>
+          <h4 className={styles.text}>Whitelist league members</h4>
+          <h4 className={styles.text}>Add winnings</h4>
         </section>
         <section className={styles.member}>
           <h1>Members</h1>
-          <h4>Buy in to your league</h4>
-          <h4>Withdraw your winnings</h4>
-          <h4>Tip your commisioner</h4>
+          <h4 className={styles.text}>Buy in to your league</h4>
+          <h4 className={styles.text}>Withdraw your winnings</h4>
+          <h4 className={styles.text}>Tip your commisioner</h4>
         </section>
       </article>
     </>

@@ -18,6 +18,10 @@
     text-align: center;
 }
 
+.text {
+    width: 15rem;
+}
+
 @media (min-width: 40rem) {
     .info {
         flex-direction: row;
