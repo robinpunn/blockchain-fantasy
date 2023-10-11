@@ -85,10 +85,6 @@ contract Fantasy {
         Season storage season = seasons[_seasonId];
         require(season.started, "Season has not started yet");
         require(_buyIn == season.buyIn, "Incorrect buy-in amount");
-        require(
-            msg.value == _buyIn,
-            "Ether sent did not match the buy-in amount"
-        );
         Player storage player = season.players[msg.sender];
         require(
             player.id == address(0),
@@ -162,10 +158,22 @@ contract Fantasy {
         return seasons[_seasonId].prizePool;
     }
 
+    function getBuyInAmount(uint _seasonId) external view returns (uint) {
+        return seasons[_seasonId].buyIn;
+    }
+
     function getSeasonCommissioner(
         uint _seasonId
     ) external view returns (address) {
         return seasons[_seasonId].commissioner;
+    }
+
+    function getWhiteListedMember(uint _seasonId, address _member) external view returns (bool) {
+        return seasons[_seasonId].whitelist[_member];
+    }
+
+    function getPlayer(uint _seasonId, address _member) external view returns (address) {
+        return seasons[_seasonId].players[_member].id;
     }
 
     function getSeasonWinnings(uint _seasonId) external view returns (uint) {
