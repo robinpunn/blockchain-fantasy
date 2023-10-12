@@ -2,6 +2,22 @@
 pragma solidity ^0.8.19;
 
 contract Fantasy {
+    /** Errors */
+    error AddressNotWhitelisted();
+    error OnlyCommissionerCanPerformThisAction();
+    error AddressAlreadyWhitelisted();
+    error SeasonHasNotStarted();
+    error SeasonDoesNotExist();
+    error CannotWithdrawOtherUsersFunds();
+    error IncorrectBuyInAmount();
+    error PlayerAlreadyJoined();
+    error PlayerNotInLeague();
+    error NoWinningsToWithdraw();
+    error FailedToSendWinnings();
+    error FailedToSendTip();
+    error SeasonIsAlreadyComplete();
+    error PlayersStillNeedToWithdraw();
+
     uint public seasonCounter;
     Season[] public seasons;
 
@@ -35,17 +51,15 @@ contract Fantasy {
     event SeasonCompleted(uint indexed seasonId, address indexed commisioner);
 
     modifier onlyWhitelisted(uint _seasonId, address _address) {
-        require(
-            seasons[_seasonId].whitelist[_address],
-            "Address not whitelisted"
-        );
+        if (!seasons[_seasonId].whitelist[_address]) {
+            revert AddressNotWhitelisted();
+        }
         _;
     }
     modifier onlyCommissioner(uint _seasonId) {
-        require(
-            msg.sender == seasons[_seasonId].commissioner,
-            "Only commissioner can perform this action"
-        );
+        if (msg.sender != seasons[_seasonId].commissioner) {
+            revert OnlyCommissionerCanPerformThisAction();
+        }
         _;
     }
 
@@ -66,7 +80,12 @@ contract Fantasy {
         uint _seasonId,
         address _address
     ) external onlyCommissioner(_seasonId) {
-        require(!seasons[_seasonId].whitelist[_address], "This address is already whitelisted");
+        if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
+        if (seasons[_seasonId].whitelist[_address]) {
+            revert AddressAlreadyWhitelisted();
+        }
         seasons[_seasonId].whitelist[_address] = true;
         emit Whitelisted(_seasonId, _address);
     }
@@ -83,13 +102,17 @@ contract Fantasy {
         uint _buyIn
     ) external payable onlyWhitelisted(_seasonId, msg.sender) {
         Season storage season = seasons[_seasonId];
-        require(season.started, "Season has not started yet");
-        require(_buyIn == season.buyIn, "Incorrect buy-in amount");
+        if (!season.started) {
+            revert SeasonHasNotStarted();
+        }
+        if (_buyIn != season.buyIn) {
+            revert IncorrectBuyInAmount();
+        }
+
         Player storage player = season.players[msg.sender];
-        require(
-            player.id == address(0),
-            "Player has already joined the season"
-        );
+        if (player.id != address(0)) {
+            revert PlayerAlreadyJoined();
+        }
 
         player.id = payable(msg.sender);
         player.paid = true;
@@ -104,9 +127,15 @@ contract Fantasy {
         uint _winnings
     ) external onlyCommissioner(_seasonId) {
         Season storage season = seasons[_seasonId];
-        require(season.started, "Season has not started yet");
+        if (!season.started) {
+            revert SeasonHasNotStarted();
+        }
+
         Player storage player = season.players[_player];
-        require(player.id != address(0), "Player is not part of the season");
+        if (player.id == address(0)) {
+            revert PlayerNotInLeague();
+        }
+
         player.winnings += _winnings;
         season.prizePool -= _winnings;
 
@@ -115,29 +144,34 @@ contract Fantasy {
 
     function withdrawWinnings(uint _seasonId) external {
         Season storage season = seasons[_seasonId];
-        require(season.started, "Season has not started yet");
-
+        if (!season.started) {
+            revert SeasonHasNotStarted();
+        }
         Player storage player = season.players[msg.sender];
-        require(
-            player.id == msg.sender,
-            "You can't withdraw someone else's funds"
-        );
-
+        if (player.id != msg.sender) {
+            revert CannotWithdrawOtherUsersFunds();
+        }
         uint winnings = player.winnings;
-        require(winnings > 0, "No winnings to withdraw");
+        if (winnings <= 0 ) {
+            revert NoWinningsToWithdraw();
+        }
 
         (bool success, ) = msg.sender.call{value: winnings}("");
-        if (success) {
+        if (!success) {
+            revert FailedToSendWinnings();
+
+        } else {
             player.winnings = 0;
         }
-        require(success, "Failed to send winnings");
 
         emit PlayerWin(_seasonId, msg.sender, winnings);
     }
 
     function tipCommisioner(uint _seasonId, uint _amount) external payable onlyWhitelisted(_seasonId, msg.sender){
         (bool success, ) = seasons[_seasonId].commissioner.call{value: _amount}("");
-        require(success, "Failed to send tip");
+        if (!success) {
+            revert FailedToSendTip();
+        }
 
         emit TippedCommissioner(_seasonId, msg.sender);
     }
@@ -146,8 +180,12 @@ contract Fantasy {
         uint _seasonId
     ) external onlyCommissioner(_seasonId) {
         Season storage season = seasons[_seasonId];
-        require(!season.complete, "Season is already complete");
-        require(season.prizePool == 0, "Players still need to be paid");
+        if (season.complete) {
+            revert SeasonIsAlreadyComplete();
+        }
+        if (season.prizePool != 0) {
+            revert PlayersStillNeedToWithdraw();
+        }
 
         season.complete = true;
 
