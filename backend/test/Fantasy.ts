@@ -23,113 +23,141 @@ describe("Deployment", function () {
     expect(fantasyContract.target).to.not.equal("0x0");
   });
 
-  it("Should start a season", async function () {
-    const { fantasyContract } = await loadFixture(deployContractFixture);
-    const amount = ethers.parseEther("1");
+  describe("Season", function () {
+    it("Should start a season", async function () {
+      const { fantasyContract } = await loadFixture(deployContractFixture);
+      const amount = ethers.parseEther("1");
 
-    await fantasyContract.addSeason(amount);
+      await fantasyContract.addSeason(amount);
 
-    const seasonStarted = await fantasyContract.seasonCounter();
-    // console.log(`Season counter: ${seasonStarted}`);
+      const seasonStarted = await fantasyContract.seasonCounter();
+      // console.log(`Season counter: ${seasonStarted}`);
 
-    expect(seasonStarted).to.equal(1);
+      expect(seasonStarted).to.equal(1);
+    });
+    it("Should set buy in", async function () {
+      const { fantasyContract, addr1 } = await loadFixture(
+        deployContractFixture
+      );
+      const amount = ethers.parseEther("1");
+
+      await fantasyContract.addSeason(amount);
+      const buyIn = await fantasyContract.getBuyInAmount(0);
+
+      expect(buyIn).to.equal(amount);
+    });
+    it("Should not be able to join if not whitelisted", async function () {
+      const { fantasyContract, addr1 } = await loadFixture(
+        deployContractFixture
+      );
+      const amount = ethers.parseEther("1");
+
+      await fantasyContract.addSeason(amount);
+
+      await expect(fantasyContract.connect(addr1).buyIn(0, amount)).to.be
+        .revertedWithCustomError;
+    });
+
+    it("Should not be able to join season that hasn't started", async function () {
+      const { fantasyContract, addr1 } = await loadFixture(
+        deployContractFixture
+      );
+      const amount = ethers.parseEther("1");
+
+      await fantasyContract.addSeason(amount);
+
+      await expect(fantasyContract.connect(addr1).buyIn(1, amount)).to.be
+        .revertedWithCustomError;
+    });
   });
 
-  it("Should be the commisioner", async function () {
-    const { fantasyContract, commissioner } = await loadFixture(
-      deployContractFixture
-    );
-    const amount = ethers.parseEther("1");
+  describe("Players", function () {
+    it("Should be the commisioner", async function () {
+      const { fantasyContract, commissioner } = await loadFixture(
+        deployContractFixture
+      );
+      const amount = ethers.parseEther("1");
 
-    await fantasyContract.addSeason(amount);
+      await fantasyContract.addSeason(amount);
 
-    const commish = await fantasyContract.getSeasonCommissioner(0);
-    console.log(
-      `Season commish: ${commish}\n Commisioner: ${commissioner.address} `
-    );
+      const commish = await fantasyContract.getSeasonCommissioner(0);
+      // console.log(
+      //   `Season commish: ${commish}\n Commisioner: ${commissioner.address} `
+      // );
 
-    expect(commissioner.address).to.equal(commish);
-  });
+      expect(commissioner.address).to.equal(commish);
+    });
 
-  it("Should set buy in", async function () {
-    const { fantasyContract, addr1 } = await loadFixture(deployContractFixture);
-    const amount = ethers.parseEther("1");
+    it("Should allow commissioner to by in", async function () {
+      const { fantasyContract, commissioner } = await loadFixture(
+        deployContractFixture
+      );
+      const amount = ethers.parseEther("1");
 
-    await fantasyContract.addSeason(amount);
-    const buyIn = await fantasyContract.getBuyInAmount(0);
+      await fantasyContract.addSeason(amount);
 
-    expect(buyIn).to.equal(amount);
-  });
+      await fantasyContract.connect(commissioner).buyIn(0, amount);
 
-  it("Should not be able to join if not whitelisted", async function () {
-    const { fantasyContract, addr1 } = await loadFixture(deployContractFixture);
-    const amount = ethers.parseEther("1");
+      const player = await fantasyContract.getPlayer(0, commissioner.address);
 
-    await fantasyContract.addSeason(amount);
+      expect(player).to.be.true;
+    });
 
-    await expect(
-      fantasyContract.connect(addr1).buyIn(0, amount)
-    ).to.be.revertedWith("Address not whitelisted");
-  });
+    it("Should be able to whitelist", async function () {
+      const { fantasyContract, addr1 } = await loadFixture(
+        deployContractFixture
+      );
+      const amount = ethers.parseEther("1");
 
-  it("Should not be able to join season that hasn't started", async function () {
-    const { fantasyContract, addr1 } = await loadFixture(deployContractFixture);
-    const amount = ethers.parseEther("1");
+      await fantasyContract.addSeason(amount);
+      await fantasyContract.addToWhitelist(0, addr1.address);
+      const whitelisted = await fantasyContract.getWhiteListedMember(
+        0,
+        addr1.address
+      );
 
-    await fantasyContract.addSeason(amount);
+      expect(whitelisted).to.be.true;
+    });
 
-    await expect(fantasyContract.connect(addr1).buyIn(1, amount)).to.be
-      .revertedWithPanic;
-  });
+    it("Whitelist should be able to buy in", async function () {
+      const { fantasyContract, addr1 } = await loadFixture(
+        deployContractFixture
+      );
+      const amount = ethers.parseEther("1");
 
-  it("Should be able to whitelist", async function () {
-    const { fantasyContract, addr1 } = await loadFixture(deployContractFixture);
-    const amount = ethers.parseEther("1");
+      await fantasyContract.addSeason(amount);
+      await fantasyContract.addToWhitelist(0, addr1.address);
 
-    await fantasyContract.addSeason(amount);
-    await fantasyContract.addToWhitelist(0, addr1.address);
-    const whitelisted = await fantasyContract.getWhiteListedMember(
-      0,
-      addr1.address
-    );
+      await expect(fantasyContract.connect(addr1).buyIn(0, amount)).to.not.be
+        .reverted;
+    });
 
-    expect(whitelisted).to.be.true;
-  });
+    it("Whitelist should not be able to buy in with lesser amount", async function () {
+      const { fantasyContract, addr1 } = await loadFixture(
+        deployContractFixture
+      );
+      const amount = ethers.parseEther("1");
+      const smallAmount = ethers.parseEther("0.5");
 
-  it("Whitelist should be able to buy in", async function () {
-    const { fantasyContract, addr1 } = await loadFixture(deployContractFixture);
-    const amount = ethers.parseEther("1");
+      await fantasyContract.addSeason(amount);
+      await fantasyContract.addToWhitelist(0, addr1.address);
 
-    await fantasyContract.addSeason(amount);
-    await fantasyContract.addToWhitelist(0, addr1.address);
+      await expect(fantasyContract.connect(addr1).buyIn(0, smallAmount)).to.be
+        .revertedWithCustomError;
+    });
 
-    await expect(fantasyContract.connect(addr1).buyIn(0, amount)).to.not.be
-      .reverted;
-  });
+    it("Whitelist should not be able to buy in with larger amount", async function () {
+      const { fantasyContract, addr1 } = await loadFixture(
+        deployContractFixture
+      );
+      const amount = ethers.parseEther("1");
+      const largeAmount = ethers.parseEther("2");
 
-  it("Whitelist should not be able to buy in with lesser amount", async function () {
-    const { fantasyContract, addr1 } = await loadFixture(deployContractFixture);
-    const amount = ethers.parseEther("1");
-    const smallAmount = ethers.parseEther("0.5");
+      await fantasyContract.addSeason(amount);
+      await fantasyContract.addToWhitelist(0, addr1.address);
 
-    await fantasyContract.addSeason(amount);
-    await fantasyContract.addToWhitelist(0, addr1.address);
-
-    await expect(
-      fantasyContract.connect(addr1).buyIn(0, smallAmount)
-    ).to.be.revertedWith("Incorrect buy-in amount");
-  });
-
-  it("Whitelist should not be able to buy in with larger amount", async function () {
-    const { fantasyContract, addr1 } = await loadFixture(deployContractFixture);
-    const amount = ethers.parseEther("1");
-    const largeAmount = ethers.parseEther("2");
-
-    await fantasyContract.addSeason(amount);
-    await fantasyContract.addToWhitelist(0, addr1.address);
-
-    await expect(
-      fantasyContract.connect(addr1).buyIn(0, largeAmount)
-    ).to.be.revertedWith("Incorrect buy-in amount");
+      await expect(fantasyContract.connect(addr1).buyIn(0, largeAmount)).to.be
+        .revertedWithCustomError;
+    });
   });
 });

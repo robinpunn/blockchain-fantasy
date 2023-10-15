@@ -6,7 +6,6 @@ contract Fantasy {
     error AddressNotWhitelisted();
     error OnlyCommissionerCanPerformThisAction();
     error AddressAlreadyWhitelisted();
-    error SeasonHasNotStarted();
     error SeasonDoesNotExist();
     error CannotWithdrawOtherUsersFunds();
     error IncorrectBuyInAmount();
@@ -34,7 +33,6 @@ contract Fantasy {
         mapping(address => Player) players;
         uint buyIn;
         uint prizePool;
-        bool started;
         bool distributed;
         bool complete;
     }
@@ -69,7 +67,6 @@ contract Fantasy {
         newSeason.id = newSeasonId;
         newSeason.buyIn = _buyIn;
         newSeason.commissioner = payable(msg.sender);
-        newSeason.started = true;
         newSeason.whitelist[msg.sender] = true;
         seasonCounter++;
         emit SeasonStarted(newSeasonId, msg.sender);
@@ -102,14 +99,14 @@ contract Fantasy {
         uint _buyIn
     ) external payable onlyWhitelisted(_seasonId, msg.sender) {
         Season storage season = seasons[_seasonId];
-        if (!season.started) {
-            revert SeasonHasNotStarted();
+        Player storage player = season.players[msg.sender];
+
+        if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
         }
-        if (_buyIn != season.buyIn) {
+        if (_buyIn != season.buyIn || _buyIn <= 0) {
             revert IncorrectBuyInAmount();
         }
-
-        Player storage player = season.players[msg.sender];
         if (player.id != address(0)) {
             revert PlayerAlreadyJoined();
         }
@@ -127,11 +124,10 @@ contract Fantasy {
         uint _winnings
     ) external onlyCommissioner(_seasonId) {
         Season storage season = seasons[_seasonId];
-        if (!season.started) {
-            revert SeasonHasNotStarted();
-        }
-
         Player storage player = season.players[_player];
+         if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
         if (player.id == address(0)) {
             revert PlayerNotInLeague();
         }
@@ -144,10 +140,10 @@ contract Fantasy {
 
     function withdrawWinnings(uint _seasonId) external {
         Season storage season = seasons[_seasonId];
-        if (!season.started) {
-            revert SeasonHasNotStarted();
-        }
         Player storage player = season.players[msg.sender];
+         if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
         if (player.id != msg.sender) {
             revert CannotWithdrawOtherUsersFunds();
         }
@@ -168,6 +164,9 @@ contract Fantasy {
     }
 
     function tipCommisioner(uint _seasonId, uint _amount) external payable onlyWhitelisted(_seasonId, msg.sender){
+        if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
         (bool success, ) = seasons[_seasonId].commissioner.call{value: _amount}("");
         if (!success) {
             revert FailedToSendTip();
@@ -180,6 +179,10 @@ contract Fantasy {
         uint _seasonId
     ) external onlyCommissioner(_seasonId) {
         Season storage season = seasons[_seasonId];
+
+        if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
         if (season.complete) {
             revert SeasonIsAlreadyComplete();
         }
@@ -193,28 +196,49 @@ contract Fantasy {
     }
 
     function getSeasonPrizePool(uint _seasonId) external view returns (uint) {
+        if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
         return seasons[_seasonId].prizePool;
     }
 
     function getBuyInAmount(uint _seasonId) external view returns (uint) {
+        if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
         return seasons[_seasonId].buyIn;
     }
 
     function getSeasonCommissioner(
         uint _seasonId
     ) external view returns (address) {
+        if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
         return seasons[_seasonId].commissioner;
     }
 
     function getWhiteListedMember(uint _seasonId, address _member) external view returns (bool) {
+        if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
         return seasons[_seasonId].whitelist[_member];
     }
 
-    function getPlayer(uint _seasonId, address _member) external view returns (address) {
-        return seasons[_seasonId].players[_member].id;
+    function getPlayer(uint _seasonId, address _member) external view returns (bool) {
+        if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
+        if( seasons[_seasonId].players[_member].id == _member) {
+            return true;
+        }
+        return false;
     }
 
     function getSeasonWinnings(uint _seasonId) external view returns (uint) {
+        if(_seasonId < 0 || _seasonId >= seasonCounter ) {
+            revert SeasonDoesNotExist();
+        }
         return seasons[_seasonId].players[msg.sender].winnings;
     }
 
