@@ -23,9 +23,30 @@ contract Fantasy {
     // State Variables  ///
     ///////////////////////
     /**
-     * @notice counter to keep track of the number of seasons
+     * @notice season id based on seasonCounter from factory contract
      */
-    uint public seasonCounter;
+    uint256 private immutable i_seasonId;
+
+    /**
+     * @notice address that interacted with createFantasyContract
+     */
+    address private immutable i_commissioner;
+
+    /**
+     * @notice address that interacted with createFantasyContract
+     */
+    uint256 private immutable i_buyIn;
+
+    /**
+     * @notice address that interacted with createFantasyContract
+     */
+    uint256 private s_prizePool;
+
+    /**
+     * @notice mapping that tracks addresses that are allowed to buy in
+     */
+    mapping(address => bool) whitelist;
+
     /**
      * @notice an array populated with Season structs
      */
@@ -99,8 +120,8 @@ contract Fantasy {
      * @param _seasonId id for the season
      * @param _address address to whitelist
      */
-    modifier onlyWhitelisted(uint _seasonId, address _address) {
-        if (!seasons[_seasonId].whitelist[_address]) {
+    modifier onlyWhitelisted(address _address) {
+        if (!whitelist[_address]) {
             revert AddressNotWhitelisted();
         }
         _;
@@ -111,11 +132,24 @@ contract Fantasy {
      * @param _seasonId id for the season
      * @param _address address to whitelist
      */
-    modifier onlyCommissioner(uint _seasonId) {
-        if (msg.sender != seasons[_seasonId].commissioner) {
+    modifier onlyCommissioner() {
+        if (msg.sender != i_commissioner) {
             revert OnlyCommissionerCanPerformThisAction();
         }
         _;
+    }
+
+    constructor(address _commissioner, uint256 _seasonId, uint256 _buyIn) {
+        i_seasonId = _seasonId;
+        i_commissioner = _commissioner;
+        i_buyIn = _buyIn;
+        // Season storage newSeason = seasons.push();
+        // newSeason.id = _seasonId;
+        // newSeason.buyIn = _buyIn;
+        // newSeason.commissioner = payable(_commissioner);
+        whitelist[_commissioner] = true;
+        emit SeasonStarted(_seasonId, _commissioner);
+        emit Whitelisted(_seasonId, _commissioner);
     }
 
     ////////////////
@@ -138,17 +172,7 @@ contract Fantasy {
      * the msg.sender is added to the whitelist
      * the season counter increments
      */
-    function addSeason(uint _buyIn) external {
-        uint newSeasonId = seasonCounter;
-        Season storage newSeason = seasons.push();
-        newSeason.id = newSeasonId;
-        newSeason.buyIn = _buyIn;
-        newSeason.commissioner = payable(msg.sender);
-        newSeason.whitelist[msg.sender] = true;
-        seasonCounter++;
-        emit SeasonStarted(newSeasonId, msg.sender);
-        emit Whitelisted(newSeasonId, msg.sender);
-    }
+    function addSeason(uint _buyIn) external {}
 
     /**
      * @notice a function to add player to season whitelist
