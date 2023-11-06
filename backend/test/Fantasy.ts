@@ -2,24 +2,26 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 
 let commissioner: any
-let addr1
-let addr2
-let addr3
-let addr4
+let addr1: any
+let addr2: any
+let addr3: any
+let addr4: any
 let factoryContract: any
 let buyIn = ethers.parseEther("1.0")
 
-before(async function () {
+beforeEach(async function () {
   [commissioner, addr1, addr2, addr3, addr4] =
     await ethers.getSigners();
 
   factoryContract = await ethers.deployContract("FantasyFactory");
-  console.log(factoryContract)
+  await factoryContract.waitForDeployment()
+
+  console.log(factoryContract.target)
 })
 
 describe("Factory Deployment", function () {
   it("Should deploy the factory contract", async function () {
-    await factoryContract.waitForDeployment()
+
     const lengthCheck = factoryContract.target.toString().length
     expect(lengthCheck).to.equal(42);
   });
@@ -27,7 +29,6 @@ describe("Factory Deployment", function () {
 
 describe("Fantasy Deployment", function () {
   it("Should deploy the fantasy contract", async function () {
-    await factoryContract.waitForDeployment()
 
     await factoryContract.connect(commissioner).createFantasyContract(buyIn);
     const counter = await factoryContract.getSeasonCounter();
@@ -36,6 +37,23 @@ describe("Fantasy Deployment", function () {
   });
 });
 
+describe("Factory Variable tests", function () {
+  it("Counter should start at 0", async function () {
+
+    const counter = await factoryContract.getSeasonCounter();
+    expect(counter).to.equal(0);
+  });
+
+  it("Counter should increment after multiple contracts", async function () {
+
+    await factoryContract.connect(commissioner).createFantasyContract(buyIn);
+    await factoryContract.connect(addr1).createFantasyContract(buyIn);
+    await factoryContract.connect(addr2).createFantasyContract(buyIn);
+
+    const counter = await factoryContract.getSeasonCounter();
+    expect(counter).to.equal(3);
+  });
+});
 
 // describe("Season", function () {
 //   it("Should start a season", async function () {
