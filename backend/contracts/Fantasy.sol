@@ -117,7 +117,6 @@ contract Fantasy {
     /**
      * @notice a function to check if player is on the season whitelist
      * @dev this modifier will be used for functions that should only be accessible to whitelisted players
-     * @param _seasonId id for the season
      * @param _address address to whitelist
      */
     modifier onlyWhitelisted(address _address) {
@@ -129,8 +128,6 @@ contract Fantasy {
     /**
      * @notice a function to add player to season whitelist
      * @dev this function will check if the provided address is in the whitelist mapping and revert if so
-     * @param _seasonId id for the season
-     * @param _address address to whitelist
      */
     modifier onlyCommissioner() {
         if (msg.sender != i_commissioner) {
@@ -186,8 +183,8 @@ contract Fantasy {
     function addToWhitelist(
         uint _seasonId,
         address _address
-    ) external onlyCommissioner(_seasonId) {
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+    ) external onlyCommissioner {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         if (seasons[_seasonId].whitelist[_address]) {
@@ -207,7 +204,7 @@ contract Fantasy {
     function removeFromWhitelist(
         uint _seasonId,
         address _address
-    ) external onlyCommissioner(_seasonId) {
+    ) external onlyCommissioner {
         delete seasons[_seasonId].whitelist[_address];
     }
 
@@ -224,11 +221,11 @@ contract Fantasy {
     function buyIn(
         uint _seasonId,
         uint _buyIn
-    ) external payable onlyWhitelisted(_seasonId, msg.sender) {
+    ) external payable onlyWhitelisted(msg.sender) {
         Season storage season = seasons[_seasonId];
         Player storage player = season.players[msg.sender];
 
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         if (_buyIn != season.buyIn || _buyIn <= 0) {
@@ -259,10 +256,10 @@ contract Fantasy {
         uint _seasonId,
         address _player,
         uint _winnings
-    ) external onlyCommissioner(_seasonId) {
+    ) external onlyCommissioner {
         Season storage season = seasons[_seasonId];
         Player storage player = season.players[_player];
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         if (player.id == address(0)) {
@@ -288,7 +285,7 @@ contract Fantasy {
     function withdrawWinnings(uint _seasonId) external {
         Season storage season = seasons[_seasonId];
         Player storage player = season.players[msg.sender];
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         if (player.id != msg.sender) {
@@ -319,8 +316,8 @@ contract Fantasy {
     function tipCommisioner(
         uint _seasonId,
         uint _amount
-    ) external payable onlyWhitelisted(_seasonId, msg.sender) {
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+    ) external payable onlyWhitelisted(msg.sender) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         (bool success, ) = seasons[_seasonId].commissioner.call{value: _amount}(
@@ -342,12 +339,10 @@ contract Fantasy {
      * reverts if the prize pool is not 0
      * sets the seasonComplete bool to true
      */
-    function completeSeason(
-        uint _seasonId
-    ) external onlyCommissioner(_seasonId) {
+    function completeSeason(uint _seasonId) external onlyCommissioner {
         Season storage season = seasons[_seasonId];
 
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         if (season.complete) {
@@ -366,14 +361,14 @@ contract Fantasy {
     // Getter Functions  ///
     ////////////////////////
     function getSeasonPrizePool(uint _seasonId) external view returns (uint) {
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         return seasons[_seasonId].prizePool;
     }
 
     function getBuyInAmount(uint _seasonId) external view returns (uint) {
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         return seasons[_seasonId].buyIn;
@@ -382,7 +377,7 @@ contract Fantasy {
     function getSeasonCommissioner(
         uint _seasonId
     ) external view returns (address) {
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         return seasons[_seasonId].commissioner;
@@ -392,7 +387,7 @@ contract Fantasy {
         uint _seasonId,
         address _member
     ) external view returns (bool) {
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         return seasons[_seasonId].whitelist[_member];
@@ -402,7 +397,7 @@ contract Fantasy {
         uint _seasonId,
         address _member
     ) external view returns (bool) {
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         if (seasons[_seasonId].players[_member].id == _member) {
@@ -412,7 +407,7 @@ contract Fantasy {
     }
 
     function getSeasonWinnings(uint _seasonId) external view returns (uint) {
-        if (_seasonId < 0 || _seasonId >= seasonCounter) {
+        if (_seasonId < 0 || _seasonId >= i_seasonId) {
             revert SeasonDoesNotExist();
         }
         return seasons[_seasonId].players[msg.sender].winnings;

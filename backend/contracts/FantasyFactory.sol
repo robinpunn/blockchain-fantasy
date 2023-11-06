@@ -7,13 +7,13 @@ contract FantasyFactory {
     ////////////////////////
     // State Variables  ///
     ///////////////////////
-    uint private s_seasonCounter;
+    uint256 private s_seasonCounter;
     /**
      * @notice owner key mapped to deployed contract
      * @dev the createFantasyContract() function will update this mapping when executed
      * the owner address will be the key that points to the fantasy address which will point to the season id
      */
-    mapping(address owner mapping( address fantasyContract => uint256 seasonId))
+    mapping(address owner => mapping(address fantasyContract => uint256 seasonId))
         private s_fantasyContracts;
 
     ///////////////
@@ -38,7 +38,22 @@ contract FantasyFactory {
             s_seasonCounter,
             _buyIn
         );
-        s_fantasyContracts[msg.sender][address(newFantasyContract)] = s_seasonCounter;
+        s_fantasyContracts[msg.sender][
+            address(newFantasyContract)
+        ] = s_seasonCounter;
         s_seasonCounter++;
+    }
+
+    ////////////////////////
+    // Getter Functions  ///
+    ////////////////////////
+    function verifySeasonId(
+        address _fantasyContract
+    ) external view returns (uint256) {
+        return s_fantasyContracts[msg.sender][_fantasyContract];
+    }
+
+    function getSeasonCounter() external view returns (uint256) {
+        return s_seasonCounter;
     }
 }
