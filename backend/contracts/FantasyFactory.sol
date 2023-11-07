@@ -39,17 +39,25 @@ contract FantasyFactory {
      * @param _buyIn sets the buy in for the newly created season
      */
     function createFantasyContract(uint256 _buyIn) external {
+        uint256 currentId = s_seasonCounter;
+
         Fantasy newFantasyContract = new Fantasy(
             payable(msg.sender),
-            s_seasonCounter,
+            currentId,
             _buyIn
         );
 
-        Season storage season = s_fantasyContracts[msg.sender][s_seasonCounter];
+        Season storage season = s_fantasyContracts[msg.sender][currentId];
         season.fantasyContract = address(newFantasyContract);
         season.buyIn = _buyIn;
 
         s_seasonCounter++;
+
+        emit FantasyContractCreation(
+            address(newFantasyContract),
+            msg.sender,
+            currentId
+        );
     }
 
     ////////////////////////

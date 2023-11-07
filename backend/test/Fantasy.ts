@@ -15,13 +15,11 @@ beforeEach(async function () {
 
   factoryContract = await ethers.deployContract("FantasyFactory");
   await factoryContract.waitForDeployment()
-
-  console.log(factoryContract.target)
 })
 
 describe("Factory Deployment", function () {
   it("Should deploy the factory contract", async function () {
-
+    console.log("factory contract: ", factoryContract.target, "factory: ", factoryContract)
     const lengthCheck = factoryContract.target.toString().length
     expect(lengthCheck).to.equal(42);
   });
@@ -35,17 +33,27 @@ describe("Fantasy Deployment", function () {
 
     expect(counter).to.equal(1);
   });
+  it("Should emit an event on deployment", async function () {
+    const fantasy = await factoryContract.connect(commissioner).createFantasyContract(buyIn);
+
+    const events = await factoryContract.queryFilter("FantasyContractCreation");
+
+    const lengthCheck = events[0].args[0].toString().length
+    expect(events.length).to.equal(1);
+    expect(events[0].args[1]).to.equal(commissioner.address)
+    expect(events[0].args[2]).to.equal(0)
+    expect(lengthCheck).to.equal(42);
+    // expect(event.event).to.equal("FantasyContractCreation");
+  });
 });
 
 describe("Factory Variable tests", function () {
   it("Counter should start at 0", async function () {
-
     const counter = await factoryContract.getSeasonCounter();
     expect(counter).to.equal(0);
   });
 
   it("Counter should increment after multiple contracts", async function () {
-
     await factoryContract.connect(commissioner).createFantasyContract(buyIn);
     await factoryContract.connect(addr1).createFantasyContract(buyIn);
     await factoryContract.connect(addr2).createFantasyContract(buyIn);
