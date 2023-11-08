@@ -5,19 +5,19 @@ contract Fantasy {
     //////////////
     // Errors  ///
     //////////////
-    error AddressNotWhitelisted();
-    error OnlyCommissionerCanPerformThisAction();
-    error AddressAlreadyWhitelisted();
-    error SeasonDoesNotExist();
-    error CannotWithdrawOtherUsersFunds();
-    error IncorrectBuyInAmount();
-    error PlayerAlreadyJoined();
-    error PlayerNotInLeague();
-    error NoWinningsToWithdraw();
-    error FailedToSendWinnings();
-    error FailedToSendTip();
-    error SeasonIsAlreadyComplete();
-    error PlayersStillNeedToWithdraw();
+    error Fantasy__AddressNotWhitelisted();
+    error Fantasy__OnlyCommissionerCanPerformThisAction();
+    error Fantasy__AddressAlreadyWhitelisted();
+    error Fantasy__SeasonDoesNotExist();
+    error Fantasy__CannotWithdrawOtherUsersFunds();
+    error Fantasy__IncorrectBuyInAmount();
+    error Fantasy__PlayerAlreadyJoined();
+    error Fantasy__PlayerNotInLeague();
+    error Fantasy__NoWinningsToWithdraw();
+    error Fantasy__FailedToSendWinnings();
+    error Fantasy__FailedToSendTip();
+    error Fantasy__SeasonIsAlreadyComplete();
+    error Fantasy__PlayersStillNeedToWithdraw();
 
     ////////////////////////
     // State Variables  ///
@@ -121,7 +121,7 @@ contract Fantasy {
      */
     modifier onlyWhitelisted(address _address) {
         if (!whitelist[_address]) {
-            revert AddressNotWhitelisted();
+            revert Fantasy__AddressNotWhitelisted();
         }
         _;
     }
@@ -131,7 +131,7 @@ contract Fantasy {
      */
     modifier onlyCommissioner() {
         if (msg.sender != i_commissioner) {
-            revert OnlyCommissionerCanPerformThisAction();
+            revert Fantasy__OnlyCommissionerCanPerformThisAction();
         }
         _;
     }
@@ -185,10 +185,10 @@ contract Fantasy {
         address _address
     ) external onlyCommissioner {
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         if (seasons[_seasonId].whitelist[_address]) {
-            revert AddressAlreadyWhitelisted();
+            revert Fantasy__AddressAlreadyWhitelisted();
         }
         seasons[_seasonId].whitelist[_address] = true;
         emit Whitelisted(_seasonId, _address);
@@ -226,13 +226,13 @@ contract Fantasy {
         Player storage player = season.players[msg.sender];
 
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         if (_buyIn != season.buyIn || _buyIn <= 0) {
-            revert IncorrectBuyInAmount();
+            revert Fantasy__IncorrectBuyInAmount();
         }
         if (player.id != address(0)) {
-            revert PlayerAlreadyJoined();
+            revert Fantasy__PlayerAlreadyJoined();
         }
 
         player.id = payable(msg.sender);
@@ -260,10 +260,10 @@ contract Fantasy {
         Season storage season = seasons[_seasonId];
         Player storage player = season.players[_player];
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         if (player.id == address(0)) {
-            revert PlayerNotInLeague();
+            revert Fantasy__PlayerNotInLeague();
         }
 
         player.winnings += _winnings;
@@ -286,19 +286,19 @@ contract Fantasy {
         Season storage season = seasons[_seasonId];
         Player storage player = season.players[msg.sender];
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         if (player.id != msg.sender) {
-            revert CannotWithdrawOtherUsersFunds();
+            revert Fantasy__CannotWithdrawOtherUsersFunds();
         }
         uint winnings = player.winnings;
         if (winnings <= 0) {
-            revert NoWinningsToWithdraw();
+            revert Fantasy__NoWinningsToWithdraw();
         }
 
         (bool success, ) = msg.sender.call{value: winnings}("");
         if (!success) {
-            revert FailedToSendWinnings();
+            revert Fantasy__FailedToSendWinnings();
         } else {
             player.winnings = 0;
         }
@@ -318,13 +318,13 @@ contract Fantasy {
         uint _amount
     ) external payable onlyWhitelisted(msg.sender) {
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         (bool success, ) = seasons[_seasonId].commissioner.call{value: _amount}(
             ""
         );
         if (!success) {
-            revert FailedToSendTip();
+            revert Fantasy__FailedToSendTip();
         }
 
         emit TippedCommissioner(_seasonId, msg.sender);
@@ -343,13 +343,13 @@ contract Fantasy {
         Season storage season = seasons[_seasonId];
 
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         if (season.complete) {
-            revert SeasonIsAlreadyComplete();
+            revert Fantasy__SeasonIsAlreadyComplete();
         }
         if (season.prizePool != 0) {
-            revert PlayersStillNeedToWithdraw();
+            revert Fantasy__PlayersStillNeedToWithdraw();
         }
 
         season.complete = true;
@@ -362,14 +362,14 @@ contract Fantasy {
     ////////////////////////
     function getSeasonPrizePool(uint _seasonId) external view returns (uint) {
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         return seasons[_seasonId].prizePool;
     }
 
     function getBuyInAmount(uint _seasonId) external view returns (uint) {
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         return seasons[_seasonId].buyIn;
     }
@@ -378,7 +378,7 @@ contract Fantasy {
         uint _seasonId
     ) external view returns (address) {
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         return seasons[_seasonId].commissioner;
     }
@@ -388,7 +388,7 @@ contract Fantasy {
         address _member
     ) external view returns (bool) {
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         return seasons[_seasonId].whitelist[_member];
     }
@@ -398,7 +398,7 @@ contract Fantasy {
         address _member
     ) external view returns (bool) {
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         if (seasons[_seasonId].players[_member].id == _member) {
             return true;
@@ -408,7 +408,7 @@ contract Fantasy {
 
     function getSeasonWinnings(uint _seasonId) external view returns (uint) {
         if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert SeasonDoesNotExist();
+            revert Fantasy__SeasonDoesNotExist();
         }
         return seasons[_seasonId].players[msg.sender].winnings;
     }

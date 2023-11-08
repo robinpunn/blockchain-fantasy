@@ -4,6 +4,12 @@ pragma solidity ^0.8.19;
 import {Fantasy} from "./Fantasy.sol";
 
 contract FantasyFactory {
+    //////////////
+    // Errors  ///
+    //////////////
+    error Fantasy_Factory__InvalidBuyInAmount();
+    error Fantasy_Factory__ContractDoesNotExist();
+
     ////////////////////////
     // State Variables  ///
     ///////////////////////
@@ -39,6 +45,9 @@ contract FantasyFactory {
      * @param _buyIn sets the buy in for the newly created season
      */
     function createFantasyContract(uint256 _buyIn) external {
+        if (_buyIn <= 0) {
+            revert Fantasy_Factory__InvalidBuyInAmount();
+        }
         uint256 currentId = s_seasonCounter;
 
         Fantasy newFantasyContract = new Fantasy(
@@ -63,15 +72,23 @@ contract FantasyFactory {
     ////////////////////////
     // Getter Functions  ///
     ////////////////////////
-
     function getFantasyContract(
         uint256 _seasonId
     ) external view returns (address) {
-        return s_fantasyContracts[msg.sender][_seasonId].fantasyContract;
+        address fantasyContract = s_fantasyContracts[msg.sender][_seasonId]
+            .fantasyContract;
+        if (fantasyContract == address(0)) {
+            revert Fantasy_Factory__ContractDoesNotExist();
+        }
+        return fantasyContract;
     }
 
     function getBuyIn(uint256 _seasonId) external view returns (uint256) {
-        return s_fantasyContracts[msg.sender][_seasonId].buyIn;
+        uint256 buyIn = s_fantasyContracts[msg.sender][_seasonId].buyIn;
+        if (buyIn == 0) {
+            revert Fantasy_Factory__ContractDoesNotExist();
+        }
+        return buyIn;
     }
 
     function getSeasonCounter() external view returns (uint256) {
