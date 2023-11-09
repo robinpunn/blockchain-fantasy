@@ -19,20 +19,22 @@ beforeEach(async function () {
 
 describe("Factory Deployment", function () {
   it("Should deploy the factory contract", async function () {
-    console.log("factory contract: ", factoryContract.target, "factory: ", factoryContract)
+    console.log("factory contract: ", factoryContract.target)
+    // console.log("factory: ", factoryContract)
     const lengthCheck = factoryContract.target.toString().length
     expect(lengthCheck).to.equal(42);
   });
 });
 
 describe("Fantasy Deployment", function () {
-  it("Should deploy the fantasy contract", async function () {
-
-    await factoryContract.connect(commissioner).createFantasyContract(buyIn);
-    const counter = await factoryContract.getSeasonCounter();
-
-    expect(counter).to.equal(1);
+  it("Should not deploy with 0 buy in", async function () {
+    await expect(factoryContract.connect(commissioner).createFantasyContract("0")).to.be.revertedWithCustomError(factoryContract, 'Fantasy_Factory__InvalidBuyInAmount()');
   });
+
+  it("Should deploy the fantasy contract", async function () {
+    expect(await factoryContract.connect(commissioner).createFantasyContract(buyIn)).to.not.be.reverted;
+  });
+
   it("Should emit an event on deployment", async function () {
     const fantasy = await factoryContract.connect(commissioner).createFantasyContract(buyIn);
 
@@ -43,17 +45,16 @@ describe("Fantasy Deployment", function () {
     expect(events[0].args[1]).to.equal(commissioner.address)
     expect(events[0].args[2]).to.equal(0)
     expect(lengthCheck).to.equal(42);
-    // expect(event.event).to.equal("FantasyContractCreation");
   });
 });
 
-describe("Factory Variable tests", function () {
-  it("Counter should start at 0", async function () {
+describe("Factory variable/getter tests", function () {
+  it("s_seasonCounter should start at 0", async function () {
     const counter = await factoryContract.getSeasonCounter();
     expect(counter).to.equal(0);
   });
 
-  it("Counter should increment after multiple contracts", async function () {
+  it("s_seasonCounter should increment after multiple contract deployments", async function () {
     await factoryContract.connect(commissioner).createFantasyContract(buyIn);
     await factoryContract.connect(addr1).createFantasyContract(buyIn);
     await factoryContract.connect(addr2).createFantasyContract(buyIn);
@@ -61,7 +62,33 @@ describe("Factory Variable tests", function () {
     const counter = await factoryContract.getSeasonCounter();
     expect(counter).to.equal(3);
   });
+
+  it("getFantasyContract() should return deployed contract", async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(buyIn);
+
+    const events = await factoryContract.queryFilter("FantasyContractCreation");
+    const eventLog = events[0];
+    const eventContract = eventLog.args[0];
+
+    const fantasyContract = await factoryContract.connect(commissioner).getFantasyContract(0);
+
+    expect(fantasyContract).to.equal(eventContract);
+  });
+
+  it("getBuyIn() should return buy in", async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(buyIn);
+
+    const fantasyBuyIn = await factoryContract.connect(commissioner).getBuyIn(0);
+
+    expect(fantasyBuyIn).to.equal(buyIn);
+  });
 });
+
+/** TODO
+ * getFantasyContract() fail
+ * getBuyIn() fail
+ * one user, multiple deployments
+ */
 
 // describe("Season", function () {
 //   it("Should start a season", async function () {

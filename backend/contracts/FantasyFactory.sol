@@ -42,7 +42,7 @@ contract FantasyFactory {
     /**
      * @notice a function to deploy a contract
      * @dev this function deploy a fantasy contract with the caller as the commissioner
-     * @param _buyIn sets the buy in for the newly created season
+     * @param _buyIn sets the buy in for the newly created season, must be > 0
      */
     function createFantasyContract(uint256 _buyIn) external {
         if (_buyIn <= 0) {
