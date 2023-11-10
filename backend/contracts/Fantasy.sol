@@ -45,7 +45,7 @@ contract Fantasy {
     /**
      * @notice mapping that tracks addresses that are allowed to buy in
      */
-    mapping(address => bool) whitelist;
+    mapping(address => Player) players;
 
     /**
      * @notice an array populated with Season structs
@@ -57,8 +57,8 @@ contract Fantasy {
      * @dev tracks address, bool on whether they were paid their winnings, and the amount of winnings
      */
     struct Player {
-        address payable id;
-        bool paid;
+        bool whitelisted;
+        bool buyInPaid;
         uint winnings;
     }
 
@@ -120,7 +120,7 @@ contract Fantasy {
      * @param _address address to whitelist
      */
     modifier onlyWhitelisted(address _address) {
-        if (!whitelist[_address]) {
+        if (!players[_address].whitelisted) {
             revert Fantasy__AddressNotWhitelisted();
         }
         _;
@@ -144,7 +144,7 @@ contract Fantasy {
         // newSeason.id = _seasonId;
         // newSeason.buyIn = _buyIn;
         // newSeason.commissioner = payable(_commissioner);
-        whitelist[_commissioner] = true;
+        players[_commissioner].whitelisted = true;
         emit SeasonStarted(_seasonId, _commissioner);
         emit Whitelisted(_seasonId, _commissioner);
     }
@@ -160,38 +160,19 @@ contract Fantasy {
     // Functions  ///
     /////////////////
     /**
-     * @notice a function to create a new season
-     * @dev anyone can call this function in order to start a new season
-     * @param _buyIn sets the buy in players will have to pay when joining the season
-     * adds a new season to the seasons array
-     * uses season counter to set id for the season
-     * the msg.sender becomes the season commissioner
-     * the msg.sender is added to the whitelist
-     * the season counter increments
-     */
-    function addSeason(uint _buyIn) external {}
-
-    /**
      * @notice a function to add player to season whitelist
      * @dev only the commissioner can call this function with the corresponding season id
-     * @param _seasonId id for the season being updated
      * @param _address id for the address to be whitelisted
      * adds provided address to the whitelist mapping
      * reverts if season id doesn't exist
      * reverts if address is already whitelisted
      */
-    function addToWhitelist(
-        uint _seasonId,
-        address _address
-    ) external onlyCommissioner {
-        if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert Fantasy__SeasonDoesNotExist();
-        }
-        if (seasons[_seasonId].whitelist[_address]) {
+    function addToWhitelist(address _address) external onlyCommissioner {
+        if (players[_address].whitelisted) {
             revert Fantasy__AddressAlreadyWhitelisted();
         }
-        seasons[_seasonId].whitelist[_address] = true;
-        emit Whitelisted(_seasonId, _address);
+        players[_address].whitelisted = true;
+        emit Whitelisted(i_seasonId, _address);
     }
 
     /**
@@ -204,42 +185,32 @@ contract Fantasy {
     function removeFromWhitelist(
         uint _seasonId,
         address _address
-    ) external onlyCommissioner {
+    ) external onlyCommissioner onlyWhitelisted(_address) {
         delete seasons[_seasonId].whitelist[_address];
     }
 
     /**
      * @notice a function to allow players to buy in
      * @dev only whitelisted players with the corresponding seawson id can call this function
-     * @param _seasonId id for the season being updated
      * @param _buyIn the buy in amount for the season
      * reverts if season id doesn't exist
      * reverts for incorrect buy in amounts
      * reverts if season has already bought in
      * uses player struct to set address as id, set paid bool to true, and increment season prizepool
      */
-    function buyIn(
-        uint _seasonId,
-        uint _buyIn
-    ) external payable onlyWhitelisted(msg.sender) {
-        Season storage season = seasons[_seasonId];
-        Player storage player = season.players[msg.sender];
-
-        if (_seasonId < 0 || _seasonId >= i_seasonId) {
-            revert Fantasy__SeasonDoesNotExist();
-        }
-        if (_buyIn != season.buyIn || _buyIn <= 0) {
+    function buyIn(uint _buyIn) external payable onlyWhitelisted(msg.sender) {
+        Player storage player = players[msg.sender];
+        if (_buyIn != i_buyIn || _buyIn <= 0) {
             revert Fantasy__IncorrectBuyInAmount();
         }
-        if (player.id != address(0)) {
+        if (player.buyInPaid) {
             revert Fantasy__PlayerAlreadyJoined();
         }
 
-        player.id = payable(msg.sender);
-        player.paid = true;
-        season.prizePool += _buyIn;
+        player.buyInPaid = true;
+        s_prizePool += _buyIn;
 
-        emit MemberJoined(_seasonId, msg.sender);
+        emit MemberJoined(i_seasonId, msg.sender);
     }
 
     /**
