@@ -104,7 +104,7 @@ contract FantasyFactory {
      * @notice a function retreive the buy in for a contract that has been deployed by msg.sender
      * @param _seasonId the s_seasonCounter value that was used when the contract was created
      * @dev this function will check s_fantasyContracts with msg.sender and _seasonId
-     * will return the buy in amount if a deployed contract exits
+     * returns the buy in amount if a deployed contract exits
      */
     function getBuyIn(uint256 _seasonId) external view returns (uint256) {
         uint256 buyIn = s_fantasyContracts[msg.sender][_seasonId].buyIn;
