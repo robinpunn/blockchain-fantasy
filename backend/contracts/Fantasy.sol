@@ -259,16 +259,20 @@ contract Fantasy {
     ////////////////////////
     // Getter Functions  ///
     ////////////////////////
-    function getSeasonPrizePool() external view returns (uint) {
-        return s_prizePool;
+    function getSeasonId() external view returns (uint256) {
+        return i_seasonId;
     }
 
-    function getBuyInAmount() external view returns (uint) {
+    function getBuyInAmount() external view returns (uint256) {
         return i_buyIn;
     }
 
     function getSeasonCommissioner() external view returns (address) {
         return i_commissioner;
+    }
+
+    function getSeasonPrizePool() external view returns (uint256) {
+        return s_prizePool;
     }
 
     function getWhiteListedMember(
