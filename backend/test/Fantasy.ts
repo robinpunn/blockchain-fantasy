@@ -38,14 +38,13 @@ describe("Fantasy Deployment", function () {
 
   it("Should emit an event on deployment", async function () {
     const fantasy = await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+    fantasy.wait()
 
-    const events = await factoryContract.queryFilter("FantasyContractCreation");
+    const fantasyContract = await factoryContract.connect(commissioner).getFantasyContract(0);
 
-    const lengthCheck = events[0].args[0].toString().length
-    expect(events.length).to.equal(1);
-    expect(events[0].args[1]).to.equal(commissioner.address)
-    expect(events[0].args[2]).to.equal(0)
-    expect(lengthCheck).to.equal(42);
+    await expect(fantasy)
+      .to.emit(factoryContract, "FantasyContractCreation")
+      .withArgs(fantasyContract, commissioner.address, 0);
   });
 
   it("Should be able to deploy multiple contracts with one address", async function () {
@@ -142,26 +141,66 @@ describe("Fantasy constructor", function () {
     expect(commish).to.equal(commissioner.address);
   });
   it("Should emit events when constructor is called", async function () {
-    await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+    const tx = await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+    tx.wait()
     const fantasyContractAddress = await factoryContract.connect(commissioner).getFantasyContract(0);
-    
+
     const FantasyContract = await ethers.getContractFactory("Fantasy");
     const fantasyContract = FantasyContract.attach(fantasyContractAddress) as Fantasy;
 
-    const filter = factoryContract.filters.SeasonStarted();
-    console.log(filter)
-    // const events = await fantasyContract.queryFilter(filter);
-    // expect(Number(events[0].args[0])).to.equal(0)
-    // expect(events[0].args[1]).to.equal(commissioner.address)
+    await expect(tx)
+      .to.emit(fantasyContract, "SeasonStarted")
+      .withArgs(0, commissioner.address);
+
+    await expect(tx)
+      .to.emit(fantasyContract, "Whitelisted")
+      .withArgs(0, commissioner.address);
   });
 });
 
 
-// describe("Fantasy getter functions", function () {
-  
-// });
+describe("Fantasy whitelist and mapping", function () {
+  let fantasyContract: Fantasy;
+
+  before(async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+    const fantasyContractAddress = await factoryContract.connect(commissioner).getFantasyContract(0);
+
+    const FantasyContract = await ethers.getContractFactory("Fantasy");
+    fantasyContract = FantasyContract.attach(fantasyContractAddress) as Fantasy;
+  })
+
+  it("Commissioner should be able to whitelist a player", async function () {
+    await fantasyContract.connect(commissioner).addToWhitelist(addr1.address);
+
+    expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr1.address)).to.be.true;
+    expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr2.address)).to.be.false;
+  });
+
+  it("Commissioner should be able to whitelist multiple players", async function () {
+    await fantasyContract.connect(commissioner).addToWhitelist(addr2.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr3.address);
+
+    expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr2.address)).to.be.true;
+    expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr3.address)).to.be.true;
+    expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr4.address)).to.be.false;
+  });
+  it("Whitelising should emit an event", async function () {
+    const whitelistTx = await fantasyContract.connect(commissioner).addToWhitelist(addr4.address);
+    await whitelistTx.wait();
+
+
+    await expect(whitelistTx)
+      .to.emit(fantasyContract, "Whitelisted")
+      .withArgs(0, addr4.address);
+
+    expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr4.address)).to.be.true;
+  });
+
+});
 
 /** TODO
+ * whitelist player
  * fantasy contract prizepool
  * fantasy contract players mapping
  * fantasy contract events
