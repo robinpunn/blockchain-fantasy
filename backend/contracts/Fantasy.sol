@@ -281,6 +281,10 @@ contract Fantasy {
         return players[_member].whitelisted;
     }
 
+    function getBuyInStatus(address _member) external view returns (bool) {
+        return players[_member].buyInPaid;
+    }
+
     function getSeasonWinnings() external view returns (uint) {
         return players[msg.sender].winnings;
     }

@@ -7,6 +7,7 @@ let addr1: any
 let addr2: any
 let addr3: any
 let addr4: any
+let addr5: any
 let factoryContract: any
 let BUYIN = ethers.parseEther("1.0")
 
@@ -196,11 +197,45 @@ describe("Fantasy whitelist and mapping", function () {
 
     expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr4.address)).to.be.true;
   });
+});
 
+describe("BuyIn and Prizepool", function () {
+  let fantasyContract: Fantasy;
+
+  before(async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+    const fantasyContractAddress = await factoryContract.connect(commissioner).getFantasyContract(0);
+
+    const FantasyContract = await ethers.getContractFactory("Fantasy");
+    fantasyContract = FantasyContract.attach(fantasyContractAddress) as Fantasy;
+
+    await fantasyContract.connect(commissioner).addToWhitelist(addr1.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr2.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr3.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr4.address);
+  })
+
+  it("Prizepool should start at 0", async function () {
+    const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
+    expect(prizepool).to.equal(0);
+  });
+  it("Commissioner should be able to buy in", async function () {
+    const buyin = await fantasyContract.connect(commissioner).buyIn(BUYIN)
+    buyin.wait()
+
+    const buyinStatus = await fantasyContract.connect(commissioner).getBuyInStatus(commissioner.address);
+    expect(buyinStatus).to.be.true
+  });
+  it("Should not be able to buy in with 0", async function () {
+    await expect(fantasyContract.connect(addr1).buyIn(0)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__IncorrectBuyInAmount")
+  });
+  it("Should not be able to buy in with wrong BUYIN amount", async function () {
+    await expect(fantasyContract.connect(addr1).buyIn(ethers.parseEther("5.0"))).to.be.revertedWithCustomError(fantasyContract, "Fantasy__IncorrectBuyInAmount")
+  });
 });
 
 /** TODO
- * whitelist player
+ * fantasy contract buyIn
  * fantasy contract prizepool
  * fantasy contract players mapping
  * fantasy contract events
