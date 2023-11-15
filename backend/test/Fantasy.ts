@@ -12,7 +12,7 @@ let factoryContract: any
 let BUYIN = ethers.parseEther("1.0")
 
 beforeEach(async function () {
-  [commissioner, addr1, addr2, addr3, addr4] =
+  [commissioner, addr1, addr2, addr3, addr4, addr5] =
     await ethers.getSigners();
 
   factoryContract = await ethers.deployContract("FantasyFactory");
@@ -226,11 +226,38 @@ describe("BuyIn and Prizepool", function () {
     const buyinStatus = await fantasyContract.connect(commissioner).getBuyInStatus(commissioner.address);
     expect(buyinStatus).to.be.true
   });
+  it("Prizepool should update after buy in", async function () {
+    const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
+    expect(prizepool).to.equal(BUYIN);
+  });
+  it("Should not be able to buy in twice", async function () {
+    await expect(fantasyContract.connect(commissioner).buyIn(BUYIN)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__PlayerAlreadyPaid")
+  });
   it("Should not be able to buy in with 0", async function () {
     await expect(fantasyContract.connect(addr1).buyIn(0)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__IncorrectBuyInAmount")
   });
   it("Should not be able to buy in with wrong BUYIN amount", async function () {
     await expect(fantasyContract.connect(addr1).buyIn(ethers.parseEther("5.0"))).to.be.revertedWithCustomError(fantasyContract, "Fantasy__IncorrectBuyInAmount")
+  });
+  it("Should not be able to buy in if not whitelisted", async function () {
+    await expect(fantasyContract.connect(addr5).buyIn(BUYIN)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__AddressNotWhitelisted")
+  });
+  it("Prizepool should update after multiple buy ins", async function () {
+    await fantasyContract.connect(addr1).buyIn(BUYIN)
+    await fantasyContract.connect(addr2).buyIn(BUYIN)
+    await fantasyContract.connect(addr3).buyIn(BUYIN)
+    await fantasyContract.connect(addr4).buyIn(BUYIN)
+    const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
+    expect(prizepool).to.equal(ethers.parseEther("5.0"));
+  });
+  it("Buying in should emit an event", async function () {
+    await fantasyContract.connect(commissioner).addToWhitelist(addr5.address);
+    const buyInTx = await fantasyContract.connect(addr5).buyIn(BUYIN)
+    buyInTx.wait()
+
+    await expect(buyInTx)
+      .to.emit(fantasyContract, "PlayerBuyIn")
+      .withArgs(addr5.address, BUYIN);
   });
 });
 
@@ -240,5 +267,6 @@ describe("BuyIn and Prizepool", function () {
  * fantasy contract players mapping
  * fantasy contract events
  * fantasy contract failing cases
+ * fantasy add withdraw tracker
  */
 

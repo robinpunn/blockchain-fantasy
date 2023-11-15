@@ -9,8 +9,9 @@ contract Fantasy {
     error Fantasy__OnlyCommissionerCanPerformThisAction();
     error Fantasy__AddressAlreadyWhitelisted();
     error Fantasy__IncorrectBuyInAmount();
-    error Fantasy__PlayerAlreadyJoined();
+    error Fantasy__PlayerAlreadyPaid();
     error Fantasy__PlayerNotInLeague();
+    error Fantasy__ExceedsPrizePool();
     error Fantasy__NoWinningsToWithdraw();
     error Fantasy__FailedToSendWinnings();
     error Fantasy__FailedToSendTip();
@@ -69,11 +70,18 @@ contract Fantasy {
     /**
      * @notice Event emitted when player joins the league
      */
-    event MemberJoined(uint indexed seasonId, address indexed member);
+    event PlayerBuyIn(address indexed member, uint256 buyIn);
     /**
-     * @notice Event emitted when commissioner adds winnings to a player address indexing season id, player, and amount added
+     * @notice Event emitted when commissioner adds winnings to a player address player, and amount added
      */
-    event PlayerWithdraw(address indexed member, uint indexed addedWinning);
+    event AddedWinning(address indexed member, uint256 indexed winningAmount);
+    /**
+     * @notice Event emitted when commissioner adds winnings to a player address player, and amount added
+     */
+    event PlayerWithdraw(
+        address indexed member,
+        uint256 indexed withdrawAmount
+    );
     /**
      * @notice Event emitted when the commissioner is tipped indexing season id and tipper
      */
@@ -159,13 +167,13 @@ contract Fantasy {
             revert Fantasy__IncorrectBuyInAmount();
         }
         if (player.buyInPaid) {
-            revert Fantasy__PlayerAlreadyJoined();
+            revert Fantasy__PlayerAlreadyPaid();
         }
 
         player.buyInPaid = true;
         s_prizePool += _buyIn;
 
-        emit MemberJoined(i_seasonId, msg.sender);
+        emit PlayerBuyIn(msg.sender, _buyIn);
     }
 
     /**
@@ -185,11 +193,14 @@ contract Fantasy {
         if (!player.whitelisted) {
             revert Fantasy__PlayerNotInLeague();
         }
+        if (_winnings > s_prizePool) {
+            revert Fantasy__ExceedsPrizePool();
+        }
 
         player.winnings += _winnings;
         s_prizePool -= _winnings;
 
-        emit PlayerWithdraw(_player, _winnings);
+        emit AddedWinning(_player, _winnings);
     }
 
     /**
