@@ -72,11 +72,11 @@ contract Fantasy {
      */
     event PlayerBuyIn(address indexed member, uint256 buyIn);
     /**
-     * @notice Event emitted when commissioner adds winnings to a player address player, and amount added
+     * @notice Event emitted when commissioner adds winnings for a player
      */
     event AddedWinning(address indexed member, uint256 indexed winningAmount);
     /**
-     * @notice Event emitted when commissioner adds winnings to a player address player, and amount added
+     * @notice Event emitted when player withdraws their funds
      */
     event PlayerWithdraw(
         address indexed member,
@@ -116,6 +116,9 @@ contract Fantasy {
         _;
     }
 
+    ///////////////////
+    // constructor ///
+    //////////////////
     constructor(address _commissioner, uint256 _seasonId, uint256 _buyIn) {
         i_seasonId = _seasonId;
         i_commissioner = _commissioner;

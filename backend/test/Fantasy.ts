@@ -37,6 +37,11 @@ describe("Fantasy Deployment", function () {
     expect(await factoryContract.connect(commissioner).createFantasyContract(BUYIN)).to.not.be.reverted;
   });
 
+  it("Should be able to deploy multiple contracts with one address", async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(BUYIN)
+    expect(await factoryContract.connect(commissioner).createFantasyContract(BUYIN)).to.not.be.reverted;
+  });
+
   it("Should emit an event on deployment", async function () {
     const fantasy = await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
     fantasy.wait()
@@ -46,11 +51,6 @@ describe("Fantasy Deployment", function () {
     await expect(fantasy)
       .to.emit(factoryContract, "FantasyContractCreation")
       .withArgs(fantasyContract, commissioner.address, 0);
-  });
-
-  it("Should be able to deploy multiple contracts with one address", async function () {
-    await factoryContract.connect(commissioner).createFantasyContract(BUYIN)
-    expect(await factoryContract.connect(commissioner).createFantasyContract(BUYIN)).to.not.be.reverted;
   });
 });
 
@@ -141,6 +141,7 @@ describe("Fantasy constructor", function () {
     expect(buyIn).to.equal(BUYIN);
     expect(commish).to.equal(commissioner.address);
   });
+
   it("Should emit events when constructor is called", async function () {
     const tx = await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
     tx.wait()
@@ -171,11 +172,22 @@ describe("Fantasy whitelist and mapping", function () {
     fantasyContract = FantasyContract.attach(fantasyContractAddress) as Fantasy;
   })
 
+  it("Commissioner should already be whitelisted", async function () {
+    expect(await fantasyContract.connect(commissioner).getWhiteListedMember(commissioner.address)).to.be.true;
+  });
+
+  it("getWhiteListMemeber() should return false if player isn't whitelisted", async function () {
+    expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr1.address)).to.be.false;
+  });
+
   it("Commissioner should be able to whitelist a player", async function () {
     await fantasyContract.connect(commissioner).addToWhitelist(addr1.address);
 
     expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr1.address)).to.be.true;
-    expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr2.address)).to.be.false;
+  });
+
+  it("Only commissioner should be able to whitelist a player", async function () {
+    await expect(fantasyContract.connect(addr2).addToWhitelist(addr2.address)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__OnlyCommissionerCanPerformThisAction")
   });
 
   it("Commissioner should be able to whitelist multiple players", async function () {
@@ -186,10 +198,14 @@ describe("Fantasy whitelist and mapping", function () {
     expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr3.address)).to.be.true;
     expect(await fantasyContract.connect(commissioner).getWhiteListedMember(addr4.address)).to.be.false;
   });
-  it("Whitelising should emit an event", async function () {
+
+  it("Commissioner should not be able to whitelist the same player twice", async function () {
+    await expect(fantasyContract.connect(commissioner).addToWhitelist(addr1.address)).to.be.revertedWithCustomError(fantasyContract, 'Fantasy__AddressAlreadyWhitelisted');
+  });
+
+  it("Whitelisting should emit an event", async function () {
     const whitelistTx = await fantasyContract.connect(commissioner).addToWhitelist(addr4.address);
     await whitelistTx.wait();
-
 
     await expect(whitelistTx)
       .to.emit(fantasyContract, "Whitelisted")
@@ -219,6 +235,7 @@ describe("BuyIn and Prizepool", function () {
     const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
     expect(prizepool).to.equal(0);
   });
+
   it("Commissioner should be able to buy in", async function () {
     const buyin = await fantasyContract.connect(commissioner).buyIn(BUYIN)
     buyin.wait()
@@ -226,22 +243,28 @@ describe("BuyIn and Prizepool", function () {
     const buyinStatus = await fantasyContract.connect(commissioner).getBuyInStatus(commissioner.address);
     expect(buyinStatus).to.be.true
   });
+
   it("Prizepool should update after buy in", async function () {
     const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
     expect(prizepool).to.equal(BUYIN);
   });
+
   it("Should not be able to buy in twice", async function () {
     await expect(fantasyContract.connect(commissioner).buyIn(BUYIN)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__PlayerAlreadyPaid")
   });
+
   it("Should not be able to buy in with 0", async function () {
     await expect(fantasyContract.connect(addr1).buyIn(0)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__IncorrectBuyInAmount")
   });
+
   it("Should not be able to buy in with wrong BUYIN amount", async function () {
     await expect(fantasyContract.connect(addr1).buyIn(ethers.parseEther("5.0"))).to.be.revertedWithCustomError(fantasyContract, "Fantasy__IncorrectBuyInAmount")
   });
+
   it("Should not be able to buy in if not whitelisted", async function () {
     await expect(fantasyContract.connect(addr5).buyIn(BUYIN)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__AddressNotWhitelisted")
   });
+
   it("Prizepool should update after multiple buy ins", async function () {
     await fantasyContract.connect(addr1).buyIn(BUYIN)
     await fantasyContract.connect(addr2).buyIn(BUYIN)
@@ -250,6 +273,7 @@ describe("BuyIn and Prizepool", function () {
     const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
     expect(prizepool).to.equal(ethers.parseEther("5.0"));
   });
+
   it("Buying in should emit an event", async function () {
     await fantasyContract.connect(commissioner).addToWhitelist(addr5.address);
     const buyInTx = await fantasyContract.connect(addr5).buyIn(BUYIN)

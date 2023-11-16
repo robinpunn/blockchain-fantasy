@@ -26,6 +26,7 @@ contract FantasyFactory {
      * @notice Season struct for each fantasy contract that gets deployed
      * @dev the createFantasyContract() function will use the Season struct to add the contract address and the buy in amount
      * the Season struct will be added to the s_fantasyContracts mapping to be associated with the contract deployer and season id
+     * the reason id isn't included in the struct is to allow easier searching if a user creates multiple leagues
      */
     struct Season {
         address fantasyContract;
