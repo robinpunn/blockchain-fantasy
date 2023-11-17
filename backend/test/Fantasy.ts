@@ -161,7 +161,7 @@ describe("Fantasy constructor", function () {
 });
 
 
-describe("Fantasy whitelist and mapping", function () {
+describe("Fantasy addToWhitelist() and players mapping", function () {
   let fantasyContract: Fantasy;
 
   before(async function () {
@@ -215,7 +215,7 @@ describe("Fantasy whitelist and mapping", function () {
   });
 });
 
-describe("BuyIn and Prizepool", function () {
+describe("buyIn() and s_prizePool", function () {
   let fantasyContract: Fantasy;
 
   before(async function () {
@@ -285,12 +285,102 @@ describe("BuyIn and Prizepool", function () {
   });
 });
 
+describe("addWinnings() and s_prizePool", function () {
+  let fantasyContract: Fantasy;
+
+  before(async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+    const fantasyContractAddress = await factoryContract.connect(commissioner).getFantasyContract(0);
+
+    const FantasyContract = await ethers.getContractFactory("Fantasy");
+    fantasyContract = FantasyContract.attach(fantasyContractAddress) as Fantasy;
+
+    await fantasyContract.connect(commissioner).addToWhitelist(addr1.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr2.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr3.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr4.address);
+
+    await fantasyContract.connect(commissioner).buyIn(BUYIN)
+    await fantasyContract.connect(addr1).buyIn(BUYIN)
+    await fantasyContract.connect(addr2).buyIn(BUYIN)
+    await fantasyContract.connect(addr3).buyIn(BUYIN)
+    await fantasyContract.connect(addr4).buyIn(BUYIN)
+  })
+
+  it("Should not be able to call addWinnings() if not whitelisted", async function () {
+    let WINNING = ethers.parseEther("3.0")
+    await expect(fantasyContract.connect(commissioner).addWinnings(addr5.address, WINNING)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__PlayerNotInLeague")
+  });
+
+  it("Should not be able to call addWinnings() amount greater than prize pool", async function () {
+    let WINNING = ethers.parseEther("6.0")
+    await expect(fantasyContract.connect(commissioner).addWinnings(addr1.address, WINNING)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__ExceedsPrizePool")
+  });
+
+  it("Only commissioner can call addWinnings()", async function () {
+    let WINNING = ethers.parseEther("3.0")
+    await expect(fantasyContract.connect(addr1).addWinnings(commissioner.address, WINNING)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__OnlyCommissionerCanPerformThisAction")
+  });
+
+  it("Should be able to call addWinnings()", async function () {
+    let WINNING = ethers.parseEther("3.0")
+
+    await fantasyContract.connect(commissioner).addWinnings(addr1.address, WINNING)
+  });
+
+  it("Prizepool should update after addWinnings() is called", async function () {
+    const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
+    expect(ethers.formatEther(prizepool)).to.equal('2.0');
+  });
+
+  it("Prizepool should update after addWinnings() called multiple times", async function () {
+    const WINNING = ethers.parseEther("0.5")
+    await fantasyContract.connect(commissioner).addWinnings(addr2.address, WINNING)
+    await fantasyContract.connect(commissioner).addWinnings(addr3.address, WINNING)
+
+    const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
+    expect(ethers.formatEther(prizepool)).to.equal('1.0');
+  });
+
+  it("Should be able to call addWinnings() multiple times to same player", async function () {
+    const WINNING = ethers.parseEther("0.25")
+    await fantasyContract.connect(commissioner).addWinnings(addr4.address, WINNING)
+    await fantasyContract.connect(commissioner).addWinnings(addr4.address, WINNING)
+  });
+
+  it("Should accurately track user amounts", async function () {
+    const addr1Winnings = await fantasyContract.connect(addr1).getSeasonWinnings()
+    const addr2Winnings = await fantasyContract.connect(addr2).getSeasonWinnings()
+    const addr3Winnings = await fantasyContract.connect(addr3).getSeasonWinnings()
+    const addr4Winnings = await fantasyContract.connect(addr4).getSeasonWinnings()
+
+    expect(ethers.formatEther(addr1Winnings)).to.equal('3.0');
+    expect(ethers.formatEther(addr2Winnings)).to.equal('0.5');
+    expect(ethers.formatEther(addr3Winnings)).to.equal('0.5');
+    expect(ethers.formatEther(addr3Winnings)).to.equal('0.5');
+  });
+
+  it("addWinnings() should emit an event", async function () {
+    const WINNING = ethers.parseEther("0.5")
+    const buyInTx = await fantasyContract.connect(commissioner).addWinnings(commissioner.address, WINNING)
+    buyInTx.wait()
+
+    const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
+    expect(ethers.formatEther(prizepool)).to.equal('0.0');
+
+    await expect(buyInTx)
+      .to.emit(fantasyContract, "AddedWinning")
+      .withArgs(commissioner.address, WINNING);
+  });
+});
+
 /** TODO
- * fantasy contract buyIn
+ * fantasy contract withdraw
  * fantasy contract prizepool
  * fantasy contract players mapping
  * fantasy contract events
  * fantasy contract failing cases
  * fantasy add withdraw tracker
+ * add complete season function
  */
 
