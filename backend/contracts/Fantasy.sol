@@ -10,6 +10,7 @@ contract Fantasy {
     error Fantasy__AddressAlreadyWhitelisted();
     error Fantasy__IncorrectBuyInAmount();
     error Fantasy__PlayerAlreadyPaid();
+    error Fantasy__FailedToBuyIn();
     error Fantasy__PlayerNotInLeague();
     error Fantasy__ExceedsPrizePool();
     error Fantasy__NoWinningsToWithdraw();
@@ -215,18 +216,18 @@ contract Fantasy {
      * reverts if there are no winnings to withdraw
      * sends the winning amount corresponding to the withdrawing address
      */
-    function withdrawWinnings() external onlyWhitelisted(msg.sender) {
+    function withdrawWinnings() external payable onlyWhitelisted(msg.sender) {
         Player storage player = players[msg.sender];
-        uint winnings = player.winnings;
+        uint256 winnings = player.winnings;
         if (winnings <= 0) {
             revert Fantasy__NoWinningsToWithdraw();
         }
 
+        player.winnings = 0;
+
         (bool success, ) = msg.sender.call{value: winnings}("");
         if (!success) {
             revert Fantasy__FailedToSendWinnings();
-        } else {
-            player.winnings = 0;
         }
 
         emit PlayerWithdraw(msg.sender, winnings);
@@ -261,7 +262,7 @@ contract Fantasy {
     //     if (season.complete) {
     //         revert Fantasy__SeasonIsAlreadyComplete();
     //     }
-    //     if (season.prizePool != 0) {
+    //     if (address(this).balance != 0) {
     //         revert Fantasy__PlayersStillNeedToWithdraw();
     //     }
 
