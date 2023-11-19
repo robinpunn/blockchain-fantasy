@@ -11,10 +11,13 @@ let addr5: any
 let factoryContract: any
 let BUYIN = ethers.parseEther("1.0")
 
+
 beforeEach(async function () {
   [commissioner, addr1, addr2, addr3, addr4, addr5] =
     await ethers.getSigners();
-
+  // const balance = await ethers.provider.getBalance(addr1.address);
+  // const balance2 = await ethers.provider.getBalance(addr2.address);
+  // console.log("bal1: ", ethers.formatEther(balance), "bal2: ", ethers.formatEther(balance2))
   factoryContract = await ethers.deployContract("FantasyFactory");
   await factoryContract.waitForDeployment()
 })
@@ -435,53 +438,50 @@ describe("Fantasy withdrawWinnings() and getBalance()", function () {
     expect(ethers.formatEther(contractBalance)).to.equal('2.0');
   });
 
-  // it("Prizepool should update after addWinnings() called multiple times", async function () {
-  //   const WINNING = ethers.parseEther("0.5")
-  //   await fantasyContract.connect(commissioner).addWinnings(addr2.address, WINNING)
-  //   await fantasyContract.connect(commissioner).addWinnings(addr3.address, WINNING)
+  it("Should be able to call withdrawWinnings() multiple times", async function () {
+    const WINNING = ethers.parseEther("0.25")
+    await fantasyContract.connect(commissioner).addWinnings(addr4.address, WINNING)
+    await fantasyContract.connect(addr4).withdrawWinnings()
+    await fantasyContract.connect(commissioner).addWinnings(addr4.address, WINNING)
+    await fantasyContract.connect(addr4).withdrawWinnings()
+  });
 
-  //   const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
-  //   expect(ethers.formatEther(prizepool)).to.equal('1.0');
-  // });
+  it("User's balance should update after withdrawWinnings() is called multiple times", async function () {
+    let addr3Winnings = await fantasyContract.connect(addr3).getSeasonWinnings()
+    expect(ethers.formatEther(addr3Winnings)).to.equal('0.5');
 
-  // it("Should be able to call addWinnings() multiple times to same player", async function () {
-  //   const WINNING = ethers.parseEther("0.25")
-  //   await fantasyContract.connect(commissioner).addWinnings(addr4.address, WINNING)
-  //   await fantasyContract.connect(commissioner).addWinnings(addr4.address, WINNING)
-  // });
+    await fantasyContract.connect(addr3).withdrawWinnings()
+    addr3Winnings = await fantasyContract.connect(addr3).getSeasonWinnings()
+    expect(ethers.formatEther(addr3Winnings)).to.equal('0.0');
+  });
 
-  // it("Should accurately track user amounts", async function () {
-  //   const addr1Winnings = await fantasyContract.connect(addr1).getSeasonWinnings()
-  //   const addr2Winnings = await fantasyContract.connect(addr2).getSeasonWinnings()
-  //   const addr3Winnings = await fantasyContract.connect(addr3).getSeasonWinnings()
-  //   const addr4Winnings = await fantasyContract.connect(addr4).getSeasonWinnings()
+  it("Contract balance should update after withdrawWinnings() is called multiple times", async function () {
+    const contractBalance = await fantasyContract.connect(commissioner).getBalance()
+    expect(ethers.formatEther(contractBalance)).to.equal('1.0');
+  });
 
-  //   expect(ethers.formatEther(addr1Winnings)).to.equal('3.0');
-  //   expect(ethers.formatEther(addr2Winnings)).to.equal('0.5');
-  //   expect(ethers.formatEther(addr3Winnings)).to.equal('0.5');
-  //   expect(ethers.formatEther(addr3Winnings)).to.equal('0.5');
-  // });
+  it("Commissioner should be able to call withdrawWinnings()", async function () {
+    await fantasyContract.connect(commissioner).addWinnings(commissioner.address, ethers.parseEther("0.5"))
+    await fantasyContract.connect(commissioner).withdrawWinnings()
+    const contractBalance = await fantasyContract.connect(commissioner).getBalance()
+    expect(ethers.formatEther(contractBalance)).to.equal('0.5');
+  });
 
-  // it("addWinnings() should emit an event", async function () {
-  //   const WINNING = ethers.parseEther("0.5")
-  //   const buyInTx = await fantasyContract.connect(commissioner).addWinnings(commissioner.address, WINNING)
-  //   buyInTx.wait()
+  it("withdrawWinnings() should emit an event", async function () {
+    const withdrawTx = await fantasyContract.connect(addr2).withdrawWinnings()
+    withdrawTx.wait()
 
-  //   const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool();
-  //   expect(ethers.formatEther(prizepool)).to.equal('0.0');
-
-  //   await expect(buyInTx)
-  //     .to.emit(fantasyContract, "AddedWinning")
-  //     .withArgs(commissioner.address, WINNING);
-  // });
+    await expect(withdrawTx)
+      .to.emit(fantasyContract, "PlayerWithdraw")
+      .withArgs(addr2.address, ethers.parseEther("0.5"));
+  });
 });
 
 /** TODO
- * fantasy contract withdraw
- * fantasy contract prizepool
  * fantasy contract players mapping
  * fantasy contract events
  * fantasy contract failing cases
  * add complete season function
+ * can't complete season unless contract balance == 0
  */
 
