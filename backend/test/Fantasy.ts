@@ -478,10 +478,8 @@ describe("Fantasy withdrawWinnings() and getBalance()", function () {
 });
 
 /** TODO
- * fantasy contract players mapping
- * fantasy contract events
- * fantasy contract failing cases
- * add complete season function
- * can't complete season unless contract balance == 0
+ * test factory variable set on deploy/ test getFactory()
+ * add complete season tests
+ * deletion events
  */
 

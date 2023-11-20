@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import {FantasyFactory} from "./FantasyFactory.sol";
+
 contract Fantasy {
     //////////////
     // Errors  ///
@@ -36,6 +38,11 @@ contract Fantasy {
      * @notice address that interacted with createFantasyContract
      */
     uint256 private immutable i_buyIn;
+
+    /**
+     * @notice address of the factory contract that deployed this contract
+     */
+    address private immutable i_factory;
 
     /**
      * @notice address that interacted with createFantasyContract
@@ -120,10 +127,16 @@ contract Fantasy {
     ///////////////////
     // constructor ///
     //////////////////
-    constructor(address _commissioner, uint256 _seasonId, uint256 _buyIn) {
+    constructor(
+        address _commissioner,
+        uint256 _seasonId,
+        uint256 _buyIn,
+        address _factory
+    ) {
         i_seasonId = _seasonId;
         i_commissioner = _commissioner;
         i_buyIn = _buyIn;
+        i_factory = _factory;
 
         players[_commissioner].whitelisted = true;
         emit SeasonStarted(_seasonId, _commissioner);
@@ -253,23 +266,19 @@ contract Fantasy {
     /**
      * @notice a function to complete the season
      * @dev only the commissioner can call this function with the corresponding season id
-     * reverts if season id doesn't exist
-     * reverts if season is already completed
-     * reverts if the prize pool is not 0
-     * sets the seasonComplete bool to true
+     * reverts if there are still funds to be withdrawn
+     * calls the remove contract function in FantasyFactory
      */
-    // function completeSeason(uint _seasonId) external onlyCommissioner {
-    //     if (season.complete) {
-    //         revert Fantasy__SeasonIsAlreadyComplete();
-    //     }
-    //     if (address(this).balance != 0) {
-    //         revert Fantasy__PlayersStillNeedToWithdraw();
-    //     }
+    function completeSeason() external onlyCommissioner {
+        if (address(this).balance != 0) {
+            revert Fantasy__PlayersStillNeedToWithdraw();
+        }
 
-    //     season.complete = true;
+        FantasyFactory factory = FantasyFactory(i_factory);
+        factory.removeFantasyContract(msg.sender, i_seasonId);
 
-    //     emit SeasonCompleted(_seasonId, msg.sender);
-    // }
+        emit SeasonCompleted(i_seasonId, msg.sender);
+    }
 
     ////////////////////////
     // Getter Functions  ///
@@ -306,5 +315,9 @@ contract Fantasy {
 
     function getBalance() external view returns (uint) {
         return address(this).balance;
+    }
+
+    function getFactory() external view returns (address) {
+        return i_factory;
     }
 }

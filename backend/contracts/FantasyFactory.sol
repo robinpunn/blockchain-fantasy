@@ -9,6 +9,7 @@ contract FantasyFactory {
     //////////////
     error Fantasy_Factory__InvalidBuyInAmount();
     error Fantasy_Factory__ContractDoesNotExist();
+    error Fantasy_Factory__OnlyCommissionerCanRemoveSeason();
 
     ////////////////////////
     // State Variables  ///
@@ -42,6 +43,12 @@ contract FantasyFactory {
         uint256 indexed seasonId
     );
 
+    event ContractRemoved(
+        address indexed fantasyContract,
+        uint256 indexed seasonId,
+        address indexed owner
+    );
+
     /////////////////
     // Functions  ///
     /////////////////
@@ -65,7 +72,8 @@ contract FantasyFactory {
         Fantasy newFantasyContract = new Fantasy(
             payable(msg.sender),
             currentId,
-            _buyIn
+            _buyIn,
+            address(this)
         );
 
         Season storage season = s_fantasyContracts[msg.sender][currentId];
@@ -79,6 +87,25 @@ contract FantasyFactory {
             msg.sender,
             currentId
         );
+    }
+
+    /**
+     * @notice a function to remove a contract from the s_fantasyContracts mapping
+     * @dev msg.sender is going to be a contract address
+     * @param _owner address that created the msg.sender contract
+     * @param _seasonId season id of the msg.sender contract
+     * removes a new Fantasy contract from the mapping when the commisioner decides to end the season
+     * the commisioner will call this function from the msg.sender contract
+     */
+    function removeFantasyContract(address _owner, uint256 _seasonId) external {
+        if (
+            msg.sender != s_fantasyContracts[_owner][_seasonId].fantasyContract
+        ) {
+            revert Fantasy_Factory__OnlyCommissionerCanRemoveSeason();
+        }
+        delete s_fantasyContracts[_owner][_seasonId];
+
+        emit ContractRemoved(msg.sender, _seasonId, _owner);
     }
 
     ////////////////////////
