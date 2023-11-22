@@ -19,11 +19,17 @@ contract Fantasy {
     error Fantasy__FailedToSendWinnings();
     error Fantasy__FailedToSendTip();
     error Fantasy__SeasonIsAlreadyComplete();
+    error Fantasy__SeasonAlreadyComplete();
     error Fantasy__PlayersStillNeedToWithdraw();
 
     ////////////////////////
     // State Variables  ///
     ///////////////////////
+    /**
+     * @notice boolean that tracks whether or not season has been completed
+     */
+    bool private s_seasonComplete;
+
     /**
      * @notice season id based on seasonCounter from factory contract
      */
@@ -270,10 +276,14 @@ contract Fantasy {
      * calls the remove contract function in FantasyFactory
      */
     function completeSeason() external onlyCommissioner {
+        if (s_seasonComplete) {
+            revert Fantasy__SeasonAlreadyComplete();
+        }
         if (address(this).balance != 0) {
             revert Fantasy__PlayersStillNeedToWithdraw();
         }
 
+        s_seasonComplete = true;
         FantasyFactory factory = FantasyFactory(i_factory);
         factory.removeFantasyContract(msg.sender, i_seasonId);
 
@@ -283,6 +293,10 @@ contract Fantasy {
     ////////////////////////
     // Getter Functions  ///
     ////////////////////////
+    function getSeasonStatus() external view returns (bool) {
+        return s_seasonComplete;
+    }
+
     function getSeasonId() external view returns (uint256) {
         return i_seasonId;
     }

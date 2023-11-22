@@ -512,6 +512,15 @@ describe("Fantasy completeSeason() and factory removeFantasyContract()", functio
     await fantasyContract.connect(addr4).buyIn(BUYIN, { value: BUYIN })
   })
 
+  it("s_seasonComplete should not be true until completeSeason() is successfully executed", async function () {
+    const seasonStatus = await fantasyContract.connect(commissioner).getSeasonStatus()
+    expect(seasonStatus).to.be.false
+  });
+
+  it("Only commissioner should be able to call completeSeason()", async function () {
+    await expect(fantasyContract.connect(addr1).completeSeason()).to.be.revertedWithCustomError(fantasyContract, "Fantasy__OnlyCommissionerCanPerformThisAction")
+  });
+
   it("Should not be able to call completeSeason() before distributing with addWinnings()", async function () {
     await expect(fantasyContract.connect(commissioner).completeSeason()).to.be.revertedWithCustomError(fantasyContract, "Fantasy__PlayersStillNeedToWithdraw")
   });
@@ -537,6 +546,39 @@ describe("Fantasy completeSeason() and factory removeFantasyContract()", functio
     expect(ethers.formatEther(contractBalance)).to.equal("2.0")
 
     await expect(fantasyContract.connect(commissioner).completeSeason()).to.be.revertedWithCustomError(fantasyContract, "Fantasy__PlayersStillNeedToWithdraw")
+  });
+
+  it("Only commissioner should be able to call completeSeason() even after all players have withdrawn", async function () {
+    const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool()
+    expect(prizepool).to.equal(0)
+
+    await fantasyContract.connect(addr2).withdrawWinnings()
+    await fantasyContract.connect(addr3).withdrawWinnings()
+    await fantasyContract.connect(addr4).withdrawWinnings()
+    await fantasyContract.connect(commissioner).withdrawWinnings()
+    const contractBalance = await fantasyContract.getBalance()
+    expect(ethers.formatEther(contractBalance)).to.equal("0.0")
+
+    await expect(fantasyContract.connect(addr1).completeSeason()).to.be.revertedWithCustomError(fantasyContract, "Fantasy__OnlyCommissionerCanPerformThisAction")
+  });
+
+  it("Should be able to successfully call completeSeason() and it should emit an event", async function () {
+    const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool()
+    expect(prizepool).to.equal(0)
+
+    const contractBalance = await fantasyContract.getBalance()
+    expect(ethers.formatEther(contractBalance)).to.equal("0.0")
+
+    const completeTx = fantasyContract.connect(commissioner).completeSeason()
+
+    await expect(completeTx)
+      .to.emit(fantasyContract, "SeasonCompleted")
+      .withArgs(0, commissioner.address);
+  });
+
+  it("s_seasonComplete should be true after completeSeason() is successfully executed", async function () {
+    const seasonStatus = await fantasyContract.connect(commissioner).getSeasonStatus()
+    expect(seasonStatus).to.be.true
   });
 
   // it("withdrawWinnings() should emit an event", async function () {
