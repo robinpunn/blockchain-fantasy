@@ -488,7 +488,7 @@ describe("Fantasy withdrawWinnings() and getBalance()", function () {
   });
 });
 
-describe("Fantasy completeSeason() and factory removeFantasyContract()", function () {
+describe("Fantasy completeSeason()", function () {
   let fantasyContract: Fantasy;
   const WINNING1 = ethers.parseEther("3.0")
   const WINNING2 = ethers.parseEther("0.5")
@@ -569,7 +569,7 @@ describe("Fantasy completeSeason() and factory removeFantasyContract()", functio
     const contractBalance = await fantasyContract.getBalance()
     expect(ethers.formatEther(contractBalance)).to.equal("0.0")
 
-    const completeTx = fantasyContract.connect(commissioner).completeSeason()
+    const completeTx = await fantasyContract.connect(commissioner).completeSeason()
 
     await expect(completeTx)
       .to.emit(fantasyContract, "SeasonCompleted")
@@ -581,19 +581,140 @@ describe("Fantasy completeSeason() and factory removeFantasyContract()", functio
     expect(seasonStatus).to.be.true
   });
 
-  // it("withdrawWinnings() should emit an event", async function () {
-  //   const withdrawTx = await fantasyContract.connect(addr2).withdrawWinnings()
-  //   withdrawTx.wait()
+});
 
-  //   await expect(withdrawTx)
-  //     .to.emit(fantasyContract, "PlayerWithdraw")
-  //     .withArgs(addr2.address, ethers.parseEther("0.5"));
-  // });
+describe("Factory removeFantasyContract()", function () {
+  let fantasyContract: Fantasy;
+  const WINNING1 = ethers.parseEther("3.0")
+  const WINNING2 = ethers.parseEther("0.5")
+
+  before(async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+
+    const fantasyContractAddress = await factoryContract.connect(commissioner).getFantasyContract(0);
+
+    const FantasyContract = await ethers.getContractFactory("Fantasy");
+    fantasyContract = FantasyContract.attach(fantasyContractAddress) as Fantasy;
+
+    await fantasyContract.connect(commissioner).addToWhitelist(addr1.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr2.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr3.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr4.address);
+
+    await fantasyContract.connect(commissioner).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr1).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr2).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr3).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr4).buyIn(BUYIN, { value: BUYIN })
+
+    await fantasyContract.connect(commissioner).addWinnings(addr1.address, WINNING1)
+    await fantasyContract.connect(commissioner).addWinnings(addr2.address, WINNING2)
+    await fantasyContract.connect(commissioner).addWinnings(addr3.address, WINNING2)
+    await fantasyContract.connect(commissioner).addWinnings(addr4.address, WINNING2)
+    await fantasyContract.connect(commissioner).addWinnings(commissioner.address, WINNING2)
+
+    await fantasyContract.connect(addr1).withdrawWinnings()
+    await fantasyContract.connect(addr2).withdrawWinnings()
+    await fantasyContract.connect(addr3).withdrawWinnings()
+    await fantasyContract.connect(addr4).withdrawWinnings()
+    await fantasyContract.connect(commissioner).withdrawWinnings()
+  })
+
+  it("Variable check", async function () {
+    const seasonComplete = await fantasyContract.connect(commissioner).getSeasonStatus()
+    expect(seasonComplete).to.be.false
+
+    const prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool()
+    expect(prizepool).to.equal(0)
+
+    const contractBalance = await fantasyContract.getBalance()
+    expect(ethers.formatEther(contractBalance)).to.equal("0.0")
+  });
+
+  it("Should not be able to successfully call removeFantasyContract() directly from factory contract", async function () {
+    await expect(factoryContract.connect(commissioner).removeFantasyContract(commissioner.address, 0)).to.be.revertedWithCustomError(factoryContract, "Fantasy_Factory__MustCallFromContract");
+    await expect(factoryContract.connect(commissioner).removeFantasyContract(fantasyContract.target, 0)).to.be.revertedWithCustomError(factoryContract, "Fantasy_Factory__MustCallFromContract");
+  });
+
+  it("Contract should not exist in s_fantasyContracts after calling seasonComplete()", async function () {
+    const completeTx = await fantasyContract.connect(commissioner).completeSeason()
+    completeTx.wait()
+
+    const seasonComplete = await fantasyContract.connect(commissioner).getSeasonStatus()
+    expect(seasonComplete).to.be.true
+
+    await expect(factoryContract.connect(commissioner).getFantasyContract(0)).to.be.revertedWithCustomError(factoryContract, "Fantasy_Factory__ContractDoesNotExist");
+  });
+
+  it("Should not be able to call seasonComplete() twice", async function () {
+    await expect(fantasyContract.connect(commissioner).completeSeason()).to.be.revertedWithCustomError(fantasyContract, "Fantasy__SeasonAlreadyComplete");
+  });
+});
+
+describe("Factory removeFantasyContract() event", function () {
+  let fantasyContract: Fantasy;
+  const WINNING1 = ethers.parseEther("3.0")
+  const WINNING2 = ethers.parseEther("0.5")
+
+  it("Should emit an event from removeFantasyContract() when seasonComplete() is called", async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+
+    const fantasyContractAddress = await factoryContract.connect(commissioner).getFantasyContract(0);
+
+    const FantasyContract = await ethers.getContractFactory("Fantasy");
+    fantasyContract = FantasyContract.attach(fantasyContractAddress) as Fantasy;
+
+    await fantasyContract.connect(commissioner).addToWhitelist(addr1.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr2.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr3.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr4.address);
+
+    await fantasyContract.connect(commissioner).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr1).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr2).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr3).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr4).buyIn(BUYIN, { value: BUYIN })
+
+    let prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool()
+    expect(ethers.formatEther(prizepool)).to.equal("5.0");
+
+    let contractBalance = await fantasyContract.getBalance()
+    expect(ethers.formatEther(contractBalance)).to.equal("5.0")
+
+    await fantasyContract.connect(commissioner).addWinnings(addr1.address, WINNING1)
+    await fantasyContract.connect(commissioner).addWinnings(addr2.address, WINNING2)
+    await fantasyContract.connect(commissioner).addWinnings(addr3.address, WINNING2)
+    await fantasyContract.connect(commissioner).addWinnings(addr4.address, WINNING2)
+    await fantasyContract.connect(commissioner).addWinnings(commissioner.address, WINNING2)
+
+    await fantasyContract.connect(addr1).withdrawWinnings()
+    await fantasyContract.connect(addr2).withdrawWinnings()
+    await fantasyContract.connect(addr3).withdrawWinnings()
+    await fantasyContract.connect(addr4).withdrawWinnings()
+    await fantasyContract.connect(commissioner).withdrawWinnings()
+
+    let seasonComplete = await fantasyContract.connect(commissioner).getSeasonStatus()
+    expect(seasonComplete).to.be.false
+
+    prizepool = await fantasyContract.connect(commissioner).getSeasonPrizePool()
+    expect(prizepool).to.equal(0)
+
+    contractBalance = await fantasyContract.getBalance()
+    expect(ethers.formatEther(contractBalance)).to.equal("0.0")
+
+    const completeTx = await fantasyContract.connect(commissioner).completeSeason()
+    completeTx.wait()
+
+    seasonComplete = await fantasyContract.connect(commissioner).getSeasonStatus()
+    expect(seasonComplete).to.be.true
+
+    await expect(completeTx)
+      .to.emit(factoryContract, "ContractRemoved")
+      .withArgs(fantasyContract.getAddress, 0, commissioner.address);
+  })
 });
 
 /** TODO
- * test factory variable set on deploy/ test getFactory()
- * add complete season tests
- * deletion events
+ * factory deletion tests/events
  */
 

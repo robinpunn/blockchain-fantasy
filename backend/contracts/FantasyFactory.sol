@@ -9,7 +9,7 @@ contract FantasyFactory {
     //////////////
     error Fantasy_Factory__InvalidBuyInAmount();
     error Fantasy_Factory__ContractDoesNotExist();
-    error Fantasy_Factory__OnlyCommissionerCanRemoveSeason();
+    error Fantasy_Factory__MustCallFromContract();
 
     ////////////////////////
     // State Variables  ///
@@ -101,7 +101,7 @@ contract FantasyFactory {
         if (
             msg.sender != s_fantasyContracts[_owner][_seasonId].fantasyContract
         ) {
-            revert Fantasy_Factory__OnlyCommissionerCanRemoveSeason();
+            revert Fantasy_Factory__MustCallFromContract();
         }
         delete s_fantasyContracts[_owner][_seasonId];
 
