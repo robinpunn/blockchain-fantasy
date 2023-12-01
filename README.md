@@ -13,7 +13,7 @@ The contract has been upgraded to utilize the factory pattern.
 
 ### How does it work?
 Originally, all of the state was managed by one contract. A user would create a league and invite league members.  The smart contract would be responsible for handling payments for the created fantasy league.  A single contract kept track of every league that was created along with all of the funds for each league.
-Version 2.0 Implements a factory pattern.  Users initially interact with a factory contract which keeps track of all the contracts that are deployed. The factory pattern allows for each league to exist within its own contract.  All the funds are no longer tied to single contract but with each individual contract deployed by the factory.
+Version 2.0 Implements a factory pattern.  Users initially interact with a factory contract which keeps track of all the contracts that are deployed. The factory pattern allows for each league to exist within its own contract.  All the funds are no longer tied to a single contract but with each individual contract deployed by the factory.
 
 ### The smart contracts
 #### `FantasyFactory.sol`
@@ -54,6 +54,26 @@ function createFantasyContract(uint256 _buyIn) external {
 	- `_buyIn`: The buy in amount that members will have to pay to join the league
 	- `address(this)`: The contract address to the factory contract. This is done to make it easier for the `Fantasy` contract to call a function on the `FantasyFactory` contract
 - The function updates the mapping which tracks all the `Fantasy` contracts that have been deployed associating the contract with the user that deployed the contract. The id of the contract is also used for tracking so a user can deploy multiple contracts
+
+When a season is "completed", it is removed from the `s_fantasyContracts` mapping.  This is done through the `removeFantasyContract` function:
+```solidity
+function removeFantasyContract(address _owner, uint256 _seasonId) external {
+    if (
+        msg.sender != s_fantasyContracts[_owner][_seasonId].fantasyContract
+    ) {
+        revert Fantasy_Factory__MustCallFromContract();
+    }
+    delete s_fantasyContracts[_owner][_seasonId];
+
+    emit ContractRemoved(msg.sender, _seasonId, _owner);
+}
+```  
+- The function takes two arguments, an address `_owner`, and a uint256 `_seasonId`. 
+    - These two arguments will be used to retrieve the `Fantasy` contract from `s_fantasyContracts`.  
+- This function is called from the `Fantasy` contract when the commissioner calls the `completeSeason` function.  
+    - That means that the `msg.sender` of this function must be the actual `Fantasy` contract.  
+    - This ensures that account addresses cannot call the function.  
+    - Only the commissioner of the calling `Fantasy` contract will be able to successfully initiate this function.
 
 </details>
 
