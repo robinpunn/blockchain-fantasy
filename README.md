@@ -75,6 +75,11 @@ function removeFantasyContract(address _owner, uint256 _seasonId) external {
     - This ensures that account addresses cannot call the function.  
     - Only the commissioner of the calling `Fantasy` contract will be able to successfully initiate this function.
 
+The factory contract has some getter functions to help retrieve data.
+- `getFantasyContract` returns the address of a deployed `Fantasy` contract based on season id. While this function doesn't have an explicit `onlyOwner` modifier, the address of the caller will be used to access the `s_fantasyContracts` mapping. Technically, this is a function meant to be called by commissioners to retrieve their contracts.
+- `getBuyIn` returns the buy in amount for a deployed `Fantasy` contract. Like the previous function, it uses the season id and the address of the function caller to access the `s_fantasyContracts` mapping. 
+-`getSeasonCounter` is a function anyone can call to see the value of the `s_seasonCounter` variable which is responsible for settings season ids.
+
 </details>
 
 <details>
