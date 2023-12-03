@@ -11,6 +11,11 @@ The is a Solidity smart contract that handles payments for fantasy sports league
 ## Version 2.0
 The contract has been upgraded to utilize the factory pattern.
 
+### Key Terms
+- `season`: The term used to refer to an active `Fantasy` contract
+- `commissioner`: Each `Fantasy` contract has a `commissioner` that functions as the owner of the contract. This is the address that deploys the `Fantasy` contract from the `FantasyFactory` contract
+- `buyIn`: The value required to pay in order to join a `season`/`Fantasy` contract   
+
 ### How does it work?
 Originally, all of the state was managed by one contract. A user would create a league and invite league members.  The smart contract would be responsible for handling payments for the created fantasy league.  A single contract kept track of every league that was created along with all of the funds for each league.
 Version 2.0 Implements a factory pattern.  Users initially interact with a factory contract which keeps track of all the contracts that are deployed. The factory pattern allows for each league to exist within its own contract.  All the funds are no longer tied to a single contract but with each individual contract deployed by the factory.
@@ -79,6 +84,14 @@ The factory contract has some getter functions to help retrieve data.
 - `getFantasyContract` returns the address of a deployed `Fantasy` contract based on season id. While this function doesn't have an explicit `onlyOwner` modifier, the address of the caller will be used to access the `s_fantasyContracts` mapping. Technically, this is a function meant to be called by commissioners to retrieve their contracts.
 - `getBuyIn` returns the buy in amount for a deployed `Fantasy` contract. Like the previous function, it uses the season id and the address of the function caller to access the `s_fantasyContracts` mapping. 
 -`getSeasonCounter` is a function anyone can call to see the value of the `s_seasonCounter` variable which is responsible for settings season ids.
+
+One of the main changes in this new contract is the `Season` struct. 
+    - In Version 1, the `Season` struct contained all of the information related to a season created by a commissioner.  This information included the `commissioner`, `id`, `players`, and more.  
+        - It was necessary for the `Season` struct to be this dense because of the lack of a factory pattern. 
+        - In version 1, there was only a single contract, so all of the necessary information was stored in the `Season` struct. 
+    - In Version 2.0, the `Season` struct does not bear as much responsibility. It is only found in the `FantasyFactory` contract. 
+        - It only contains the address of the deployed `Fantasy` contract along with the `buyIn`
+        - The `Season` struct is contained within a mapping which is accessed with the ``commissioner`` address and `seasonId`
 
 </details>
 
