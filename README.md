@@ -4,17 +4,17 @@ This was created as a final project for Alchemy University's Ethereum Bootcamp.
 ## What is this?
 The is a Solidity smart contract that handles payments for fantasy sports leagues. The original smart contract, Version 1.0, has gone through some changes. Version 2.0 is the current version of the smart contract. Read about both below.
 
+### Key Terms
+- `season`: The term used to refer to an active `Fantasy` contract
+- `commissioner`: Each `Fantasy` contract has a `commissioner` that functions as the owner of the contract. This is the address that deploys the `Fantasy` contract from the `FantasyFactory` contract
+- `buyIn`: The value required to pay in order to join a `season`/`Fantasy` contract   
+
 <details>
 
 <summary> Version 2.0 </summary>
 
 ## Version 2.0
 The contract has been upgraded to utilize the factory pattern.
-
-### Key Terms
-- `season`: The term used to refer to an active `Fantasy` contract
-- `commissioner`: Each `Fantasy` contract has a `commissioner` that functions as the owner of the contract. This is the address that deploys the `Fantasy` contract from the `FantasyFactory` contract
-- `buyIn`: The value required to pay in order to join a `season`/`Fantasy` contract   
 
 ### How does it work?
 Originally, all of the state was managed by one contract. A user would create a league and invite league members.  The smart contract would be responsible for handling payments for the created fantasy league.  A single contract kept track of every league that was created along with all of the funds for each league.
@@ -92,6 +92,9 @@ One of the main changes in this new contract is the `Season` struct.
     - In Version 2.0, the `Season` struct does not bear as much responsibility. It is only found in the `FantasyFactory` contract. 
         - It only contains the address of the deployed `Fantasy` contract along with the `buyIn`
         - The `Season` struct is contained within a mapping which is accessed with the ``commissioner`` address and `seasonId`
+
+#### `Fantasy.sol`
+The factory pattern's benefit is highlighted by the `Fantasy.sol` contract.  A user that wants to create a `Fantasy` contract will first interact with the `FantasyFactory.sol` contract. Interaction with `FantasyFactory` will lead to the creation of a `Fantasy` contract.  This `Fantasy` contract will hold all of the state specfic to a single season.  The user that deployed the `Fantasy` contract will become the commissioner of the contract. This is a major improvement from `Version 1.0` due to the fact that `Version 1.0` handle every season created in one main contract.  The dynamic of having a single `Fantasy` contract is a security improvement considering funds are now tied to various individual contracts rather than being accumulated in one single contract.    
 
 </details>
 
