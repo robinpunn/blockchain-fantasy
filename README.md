@@ -94,7 +94,35 @@ One of the main changes in this new contract is the `Season` struct.
         - The `Season` struct is contained within a mapping which is accessed with the ``commissioner`` address and `seasonId`
 
 #### `Fantasy.sol`
-The factory pattern's benefit is highlighted by the `Fantasy.sol` contract.  A user that wants to create a `Fantasy` contract will first interact with the `FantasyFactory.sol` contract. Interaction with `FantasyFactory` will lead to the creation of a `Fantasy` contract.  This `Fantasy` contract will hold all of the state specfic to a single season.  The user that deployed the `Fantasy` contract will become the commissioner of the contract. This is a major improvement from `Version 1.0` due to the fact that `Version 1.0` handle every season created in one main contract.  The dynamic of having a single `Fantasy` contract is a security improvement considering funds are now tied to various individual contracts rather than being accumulated in one single contract.    
+The factory pattern's benefit is highlighted by the `Fantasy.sol` contract.  A user that wants to create a `Fantasy` contract will first interact with the `FantasyFactory.sol` contract. Interaction with `FantasyFactory` will lead to the creation of a `Fantasy` contract.  This `Fantasy` contract will hold all of the state specfic to a single season.  The user that deployed the `Fantasy` contract will become the commissioner of the contract. This is a major improvement from `Version 1.0` due to the fact that `Version 1.0` handle every season created in one main contract.  The dynamic of having a single `Fantasy` contract is a security improvement considering funds are now tied to various individual contracts rather than being accumulated in one single contract.
+
+The `Fantasy` contract has important **state variables**:
+```solidity
+    bool private s_seasonComplete;
+    uint256 private immutable i_seasonId;
+    address private immutable i_commissioner;
+    uint256 private immutable i_buyIn;
+    address private immutable i_factory;
+    uint256 private s_prizePool;
+    mapping(address => Player) players;
+```
+- `s_seasonComplete` is a boolean used to handle deletion of the smart contract from the `FantasyFactory` mapping. It can only be true once everyone has received their winnings.
+- `i_seasonId` is an immutable uint256, and it is set when the contract is created. The value is sent from the `FantasyFactory` contract. This value allows a user to deploy multiple contracts as it is a key in the `s_fantasyContracts` found in `FantasyFactory`
+- `i_commissioner` is and immutable address, and it is set when the contract is created. The value is sent from the `FantasyFactory` contract, and the address is the commissioner/owner of the contract.
+- `i_buyIn` is an immutable uint256 that acts as a monetary gateway into the contract. Along with another check, when a user attempts to join a season, their buy in amount must match this value.
+- `i_factory` is an immutable address which is sent when the contract is created. It is the address of the `FactoryContract`.
+- `s_prizePool` is incremented each time a user buys in to the league. It is used to track funds making distribution easier.
+- `players` is a mapping that maps a user's address with a `Player` struct. The `Player` struct contains important information about each user.
+```solidity
+ struct Player {
+    bool whitelisted;
+    bool buyInPaid;
+    uint winnings;
+}
+```
+- `whitelisted` is a boolean that is set to true when a commissioner enables a user to join the league. In `Version 1.0`, there was a mapping called `whitelist` which served the purpose of storing addresses that were allowed to join the league. In `Version 2.0`, this is simplified into a boolean value. The `whitelisted` boolean ensures only the players in this league can interact with the functions of the `Fantasy` contract.
+- `buyInPaid` is another boolean value that becomes true when a user successfully buys in to the league.
+- `winnings` is a uint that keeps track of how much the player is allowed to withdraw. This is a value that will be adjusted by the commissioner.
 
 </details>
 
