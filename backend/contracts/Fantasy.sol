@@ -58,7 +58,7 @@ contract Fantasy {
     /**
      * @notice mapping that tracks addresses that are allowed to buy in
      */
-    mapping(address => Player) players;
+    mapping(address playerAddress => Player playerStruct) s_players;
 
     /**
      * @notice Player struct
@@ -114,7 +114,7 @@ contract Fantasy {
      * @param _address address to whitelist
      */
     modifier onlyWhitelisted(address _address) {
-        if (!players[_address].whitelisted) {
+        if (!s_players[_address].whitelisted) {
             revert Fantasy__AddressNotWhitelisted();
         }
         _;
@@ -144,7 +144,7 @@ contract Fantasy {
         i_buyIn = _buyIn;
         i_factory = _factory;
 
-        players[_commissioner].whitelisted = true;
+        s_players[_commissioner].whitelisted = true;
         emit SeasonStarted(_seasonId, _commissioner);
         emit Whitelisted(_seasonId, _commissioner);
     }
@@ -168,10 +168,10 @@ contract Fantasy {
      * reverts if address is already whitelisted
      */
     function addToWhitelist(address _address) external onlyCommissioner {
-        if (players[_address].whitelisted) {
+        if (s_players[_address].whitelisted) {
             revert Fantasy__AddressAlreadyWhitelisted();
         }
-        players[_address].whitelisted = true;
+        s_players[_address].whitelisted = true;
         emit Whitelisted(i_seasonId, _address);
     }
 
@@ -185,7 +185,7 @@ contract Fantasy {
      * uses player struct to set address as id, set paid bool to true, and increment season prizepool
      */
     function buyIn(uint _buyIn) external payable onlyWhitelisted(msg.sender) {
-        Player storage player = players[msg.sender];
+        Player storage player = s_players[msg.sender];
         if (_buyIn != i_buyIn || _buyIn <= 0) {
             revert Fantasy__IncorrectBuyInAmount();
         }
@@ -212,7 +212,7 @@ contract Fantasy {
         address _player,
         uint _winnings
     ) external onlyCommissioner {
-        Player storage player = players[_player];
+        Player storage player = s_players[_player];
         if (!player.whitelisted) {
             revert Fantasy__PlayerNotInLeague();
         }
@@ -236,7 +236,7 @@ contract Fantasy {
      * sends the winning amount corresponding to the withdrawing address
      */
     function withdrawWinnings() external payable onlyWhitelisted(msg.sender) {
-        Player storage player = players[msg.sender];
+        Player storage player = s_players[msg.sender];
         uint256 winnings = player.winnings;
         if (winnings <= 0) {
             revert Fantasy__NoWinningsToWithdraw();
@@ -316,15 +316,15 @@ contract Fantasy {
     function getWhiteListedMember(
         address _member
     ) external view returns (bool) {
-        return players[_member].whitelisted;
+        return s_players[_member].whitelisted;
     }
 
     function getBuyInStatus(address _member) external view returns (bool) {
-        return players[_member].buyInPaid;
+        return s_players[_member].buyInPaid;
     }
 
     function getSeasonWinnings() external view returns (uint) {
-        return players[msg.sender].winnings;
+        return s_players[msg.sender].winnings;
     }
 
     function getBalance() external view returns (uint) {
