@@ -124,6 +124,29 @@ The `Fantasy` contract has important **state variables**:
 - `buyInPaid` is another boolean value that becomes true when a user successfully buys in to the league.
 - `winnings` is a uint that keeps track of how much the player is allowed to withdraw. This is a value that will be adjusted by the commissioner.
 
+`Fantasy.sol` has two important modifiers.
+The `onlyWhitelisted` modifier ensures that only players invited to the league can interact with the contract.
+```solidity
+modifier onlyWhitelisted(address _address) {
+    if (!players[_address].whitelisted) {
+        revert Fantasy__AddressNotWhitelisted();
+    }
+    _;
+}
+```
+The modifier takes an address as an argument. The modifier takes the address and uses it as a key in the `s_players` mapping. The function verifies that the address returns true for the `whitelisted` parameter.
+
+The `onlyCommissioner` modifier ensures only the commissioner can call certain functions.
+```solidity
+modifier onlyCommissioner() {
+	if (msg.sender != i_commissioner) {
+		revert Fantasy__OnlyCommissionerCanPerformThisAction();
+	}
+	_;
+}
+```
+The `i_commissioner` variable is assigned when the `Fantasy` contract is deployed. This variable is used to compare with `msg.sender` to ensure only the commissioner can interact with certain functions.
+
 </details>
 
 <details>
