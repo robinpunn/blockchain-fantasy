@@ -147,6 +147,31 @@ modifier onlyCommissioner() {
 ```
 The `i_commissioner` variable is assigned when the `Fantasy` contract is deployed. This variable is used to compare with `msg.sender` to ensure only the commissioner can interact with certain functions.
 
+The `constructor` for `Fantasy.sol` is integral in setting the unique parameters for each contract that is deployed by `FantasyFactory`.  
+```solidity
+constructor(
+        address _commissioner,
+        uint256 _seasonId,
+        uint256 _buyIn,
+        address _factory
+    ) {
+        i_seasonId = _seasonId;
+        i_commissioner = _commissioner;
+        i_buyIn = _buyIn;
+        i_factory = _factory;
+
+        s_players[_commissioner].whitelisted = true;
+        emit SeasonStarted(_seasonId, _commissioner);
+        emit Whitelisted(_seasonId, _commissioner);
+    }
+```
+The constructor has 4 parameters:
+- `_commissioner` is an address that dictates the ownership of the deployed `Fantasy` contract
+- `_seasonId` is the unique uint256 identifier assigned to this contract which is based on the season counter in `FantasyFactory.sol`
+- `_buyIn` is the amount that whitelisted members must pay to join the league
+- `_iFactory` is the contract address of `FantasyFactory.sol` which is used in the function to complete the season
+When a new contract is created with `FantasyFactory.sol`, this constructor is provided with the necessary arguments. So launching a new contract from `FantasyFactory.sol` will assign a commissioner, provide a season id, set the buy in, and store the `FantasyFactory.sol` contract address.  Additionally, the commissioner's address will be whitelisted allowing the commissioner to buy in.
+
 </details>
 
 <details>
