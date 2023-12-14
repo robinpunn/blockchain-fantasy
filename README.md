@@ -172,6 +172,24 @@ The constructor has 4 parameters:
 - `_iFactory` is the contract address of `FantasyFactory.sol` which is used in the function to complete the season
 When a new contract is created with `FantasyFactory.sol`, this constructor is provided with the necessary arguments. So launching a new contract from `FantasyFactory.sol` will assign a commissioner, provide a season id, set the buy in, and store the `FantasyFactory.sol` contract address.  Additionally, the commissioner's address will be whitelisted allowing the commissioner to buy in.
 
+The first function important to the `Fantasy` contract is the `addToWhitelist` function:
+```solidity
+function addToWhitelist(address _address) external onlyCommissioner {
+    if (s_players[_address].whitelisted) {
+        revert Fantasy__AddressAlreadyWhitelisted();
+    }
+    s_players[_address].whitelisted = true;
+    emit Whitelisted(i_seasonId, _address);
+}
+```
+- This function can only be called by the `commissioner`
+- The function has one parameter, an address
+    - The address that the commissioner will input through the frontend will be the address of the user that is to be whitelisted
+- If the address is already whitelisted, this function will rever
+- The address is added to the `s_players` mapping, setting the `whitelisted` boolean found in the `Player` struct to true
+- The whitelisted address now has access to certain functions in the `Fantasy` contract
+    - The whitelisted address will only have access to the specific contract associated with the `commissioner`
+
 </details>
 
 <details>
