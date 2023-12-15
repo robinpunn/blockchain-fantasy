@@ -14,6 +14,7 @@ contract Fantasy {
     error Fantasy__PlayerAlreadyPaid();
     error Fantasy__FailedToBuyIn();
     error Fantasy__PlayerNotInLeague();
+    error Fantasy__PlayerDidNotPayBuyIn();
     error Fantasy__ExceedsPrizePool();
     error Fantasy__NoWinningsToWithdraw();
     error Fantasy__FailedToSendWinnings();
@@ -215,6 +216,9 @@ contract Fantasy {
         Player storage player = s_players[_player];
         if (!player.whitelisted) {
             revert Fantasy__PlayerNotInLeague();
+        }
+        if (!player.buyInPaid) {
+            revert Fantasy__PlayerDidNotPayBuyIn();
         }
         if (_winnings > s_prizePool) {
             revert Fantasy__ExceedsPrizePool();

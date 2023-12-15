@@ -336,6 +336,13 @@ describe("Fantasy addWinnings() and s_prizePool", function () {
     await expect(fantasyContract.connect(commissioner).addWinnings(addr5.address, WINNING)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__PlayerNotInLeague")
   });
 
+  it("Should not be able to call addWinnings() if buy in not paid", async function () {
+    let WINNING = ethers.parseEther("3.0")
+    await fantasyContract.connect(commissioner).addToWhitelist(addr5.address);
+    // await fantasyContract.connect(addr5).buyIn(BUYIN)
+    await expect(fantasyContract.connect(commissioner).addWinnings(addr5.address, WINNING)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__PlayerDidNotPayBuyIn")
+  });
+
   it("Should not be able to call addWinnings() amount greater than prize pool", async function () {
     let WINNING = ethers.parseEther("6.0")
     await expect(fantasyContract.connect(commissioner).addWinnings(addr1.address, WINNING)).to.be.revertedWithCustomError(fantasyContract, "Fantasy__ExceedsPrizePool")
@@ -382,6 +389,7 @@ describe("Fantasy addWinnings() and s_prizePool", function () {
     expect(ethers.formatEther(addr2Winnings)).to.equal('0.5');
     expect(ethers.formatEther(addr3Winnings)).to.equal('0.5');
     expect(ethers.formatEther(addr3Winnings)).to.equal('0.5');
+    expect(ethers.formatEther(addr4Winnings)).to.equal('0.5');
   });
 
   it("addWinnings() should emit an event", async function () {

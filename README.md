@@ -96,6 +96,7 @@ One of the main changes in this new contract is the `Season` struct.
 #### `Fantasy.sol`
 The factory pattern's benefit is highlighted by the `Fantasy.sol` contract.  A user that wants to create a `Fantasy` contract will first interact with the `FantasyFactory.sol` contract. Interaction with `FantasyFactory` will lead to the creation of a `Fantasy` contract.  This `Fantasy` contract will hold all of the state specfic to a single season.  The user that deployed the `Fantasy` contract will become the commissioner of the contract. This is a major improvement from `Version 1.0` due to the fact that `Version 1.0` handle every season created in one main contract.  The dynamic of having a single `Fantasy` contract is a security improvement considering funds are now tied to various individual contracts rather than being accumulated in one single contract.
 
+##### State Variables
 The `Fantasy` contract has important **state variables**:
 ```solidity
     bool private s_seasonComplete;
@@ -124,6 +125,7 @@ The `Fantasy` contract has important **state variables**:
 - `buyInPaid` is another boolean value that becomes true when a user successfully buys in to the league.
 - `winnings` is a uint that keeps track of how much the player is allowed to withdraw. This is a value that will be adjusted by the commissioner.
 
+##### Modifiers
 `Fantasy.sol` has two important modifiers.
 The `onlyWhitelisted` modifier ensures that only players invited to the league can interact with the contract.
 ```solidity
@@ -147,6 +149,7 @@ modifier onlyCommissioner() {
 ```
 The `i_commissioner` variable is assigned when the `Fantasy` contract is deployed. This variable is used to compare with `msg.sender` to ensure only the commissioner can interact with certain functions.
 
+##### Constructor
 The `constructor` for `Fantasy.sol` is integral in setting the unique parameters for each contract that is deployed by `FantasyFactory`.  
 ```solidity
 constructor(
@@ -172,6 +175,7 @@ The constructor has 4 parameters:
 - `_iFactory` is the contract address of `FantasyFactory.sol` which is used in the function to complete the season
 When a new contract is created with `FantasyFactory.sol`, this constructor is provided with the necessary arguments. So launching a new contract from `FantasyFactory.sol` will assign a commissioner, provide a season id, set the buy in, and store the `FantasyFactory.sol` contract address.  Additionally, the commissioner's address will be whitelisted allowing the commissioner to buy in.
 
+##### `addToWhiteList`
 The first function important to the `Fantasy` contract is the `addToWhitelist` function:
 ```solidity
 function addToWhitelist(address _address) external onlyCommissioner {
