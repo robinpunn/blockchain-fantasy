@@ -194,6 +194,32 @@ function addToWhitelist(address _address) external onlyCommissioner {
 - The whitelisted address now has access to certain functions in the `Fantasy` contract
     - The whitelisted address will only have access to the specific contract associated with the `commissioner`
 
+##### `buyIn`
+The `buyIn` function allows whitelisted addresses to pay the buy in fee for the league
+```
+function buyIn(uint _buyIn) external payable onlyWhitelisted(msg.sender) {
+        Player storage player = s_players[msg.sender];
+        if (_buyIn != i_buyIn || _buyIn <= 0) {
+            revert Fantasy__IncorrectBuyInAmount();
+        }
+        if (player.buyInPaid) {
+            revert Fantasy__PlayerAlreadyPaid();
+        }
+
+        player.buyInPaid = true;
+        s_prizePool += _buyIn;
+        
+        emit PlayerBuyIn(msg.sender, _buyIn);
+    }
+```
+- The function has one argument `_buyIn`: the buy in amount 
+- This function can only be called by whitelisted addresses
+- If the buy in amount used as an argument does not match with the `i_buyIn` variable or if the buy in is 0, this function will revert
+- The the address calling this function has already paid the buy in, this function will revert
+- When this function is called successfully: 
+	- The `buyInPaid` boolean in the `Player` struct associated with the address calling this function will be set to true
+	- `s_prizepool` will be incremented with the `_buyIn` amount
+    
 </details>
 
 <details>
