@@ -219,6 +219,41 @@ function buyIn(uint _buyIn) external payable onlyWhitelisted(msg.sender) {
 - When this function is called successfully: 
 	- The `buyInPaid` boolean in the `Player` struct associated with the address calling this function will be set to true
 	- `s_prizepool` will be incremented with the `_buyIn` amount
+
+##### `addWinnings`
+The `addWinnings` function allows the commissioner to distribute funds to players in the league.  This can be done at any point in during the duration of the contract.  
+```
+    function addWinnings(
+        address _player,
+        uint _winnings
+    ) external onlyCommissioner {
+        Player storage player = s_players[_player];
+
+        if (!player.whitelisted) {
+            revert Fantasy__PlayerNotInLeague();
+        }
+        if (!player.buyInPaid) {
+            revert Fantasy__PlayerDidNotPayBuyIn();
+        }
+        if (_winnings > s_prizePool) {
+            revert Fantasy__ExceedsPrizePool();
+        }
+
+        player.winnings += _winnings;
+        s_prizePool -= _winnings;
+
+        emit AddedWinning(_player, _winnings);
+    }
+```
+- The function takes two arguments and address and a uint
+	- Funds will be added to the `_player` address
+	- `_winnings` is the amount to be added
+- If the commissioner attempts to add winnings to an address that isn't whitelisted, the function will revert.
+- If a player is whitelisted, but the buy in has yet to be paid, the commissioner cannot add winnings for the player.
+- If the amount being added is greater than the current prizepool, the function will revert
+- When this function is called successfully:
+	- The `Player` struct winning key is incremented. 
+	- The `prizePool` is decremented by the same amount
     
 </details>
 
