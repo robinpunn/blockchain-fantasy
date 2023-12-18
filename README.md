@@ -254,7 +254,39 @@ The `addWinnings` function allows the commissioner to distribute funds to player
 - When this function is called successfully:
 	- The `Player` struct winning key is incremented. 
 	- The `prizePool` is decremented by the same amount
-    
+
+##### `withdrawWinnings`
+As the commissioner distributes the prizepool to the players, a player is free to withdraw their funds as they choose.  This is handled by the `withdrawWinnings` function:
+```
+ function withdrawWinnings() external payable onlyWhitelisted(msg.sender) {
+	Player storage player = s_players[msg.sender];
+	uint256 winnings = player.winnings;
+
+	if (winnings <= 0) {
+		revert Fantasy__NoWinningsToWithdraw();
+	}
+	
+	player.winnings = 0;
+
+	(bool success, ) = msg.sender.call{value: winnings}("");
+	if (!success) {
+		revert Fantasy__FailedToSendWinnings();
+	}
+
+	emit PlayerWithdraw(msg.sender, winnings);
+}
+```
+- The function does not take any arguments
+- The function is payable, so it can transfer ether
+- The function has the `onlyWhitelisted` modifier attached to it.
+	- While the modifier isn't absolutely necessary as there are further checks, it still ensures only players in this specific league can successfully call this function
+- If a player attempts to call this function while there are no winnings associated with the player, this function will revert
+	- This check is made using `msg.sender` and checking the `s_players` mapping
+	- Because `msg.sender` must be located in the `s_players` mapping, there should be no worries of malicious addresses making calls 
+	- A player attempting to act maliciously will only be able to withdraw funds associated with their address
+- When this function is successfully called, the player winnings will be set to 0 to ensure multiple calls cannot be made
+- This function will transfer the winning value in ether to `msg.sender`
+
 </details>
 
 <details>
