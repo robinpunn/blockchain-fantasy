@@ -18,6 +18,7 @@ contract Fantasy {
     error Fantasy__ExceedsPrizePool();
     error Fantasy__NoWinningsToWithdraw();
     error Fantasy__FailedToSendWinnings();
+    error Fantasy__TipTooSmall();
     error Fantasy__FailedToSendTip();
     error Fantasy__SeasonIsAlreadyComplete();
     error Fantasy__SeasonAlreadyComplete();
@@ -259,18 +260,18 @@ contract Fantasy {
     /**
      * @notice a function to allow whitelisted players to tip the commissioner
      * @dev only players whitelisted to this season can tip
-     * @param _amount the amount to be tipped
-     * reverts if season id doesn't exist
      */
-    function tipCommisioner(
-        uint _amount
-    ) external payable onlyWhitelisted(msg.sender) {
-        (bool success, ) = i_commissioner.call{value: _amount}("");
+    function tipCommisioner() external payable onlyWhitelisted(msg.sender) {
+        uint256 minValue = 0.001 ether * 10 ** 18;
+        if (msg.value < minValue) {
+            revert Fantasy__TipTooSmall();
+        }
+        (bool success, ) = i_commissioner.call{value: msg.value}("");
         if (!success) {
             revert Fantasy__FailedToSendTip();
         }
 
-        emit TippedCommissioner(msg.sender, _amount);
+        emit TippedCommissioner(msg.sender, msg.value);
     }
 
     /**

@@ -174,7 +174,6 @@ describe("Fantasy constructor", function () {
   });
 });
 
-
 describe("Fantasy addToWhitelist() and players mapping", function () {
   let fantasyContract: Fantasy;
 
@@ -723,6 +722,6 @@ describe("Factory removeFantasyContract() event", function () {
 });
 
 /** TODO
- * factory deletion tests/events
+ * tipCommissioner
  */
 
