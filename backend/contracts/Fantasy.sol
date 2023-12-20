@@ -261,8 +261,8 @@ contract Fantasy {
      * @notice a function to allow whitelisted players to tip the commissioner
      * @dev only players whitelisted to this season can tip
      */
-    function tipCommisioner() external payable onlyWhitelisted(msg.sender) {
-        uint256 minValue = 0.001 ether * 10 ** 18;
+    function tipCommissioner() external payable onlyWhitelisted(msg.sender) {
+        uint256 minValue = 0.001 ether;
         if (msg.value < minValue) {
             revert Fantasy__TipTooSmall();
         }

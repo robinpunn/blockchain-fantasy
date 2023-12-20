@@ -721,6 +721,80 @@ describe("Factory removeFantasyContract() event", function () {
   })
 });
 
+describe("Fantasy tipCommissioner()", function () {
+  let fantasyContract: Fantasy;
+  const WINNING1 = ethers.parseEther("3.0")
+  const WINNING2 = ethers.parseEther("0.5")
+
+  it("Should not be able to call tipCommissioner() if not whitelisted", async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+    const fantasyContractAddress = await factoryContract.connect(commissioner).getFantasyContract(0);
+
+    const FantasyContract = await ethers.getContractFactory("Fantasy");
+    fantasyContract = FantasyContract.attach(fantasyContractAddress) as Fantasy;
+
+    await fantasyContract.connect(commissioner).addToWhitelist(addr1.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr2.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr3.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr4.address);
+
+    await fantasyContract.connect(commissioner).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr1).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr2).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr3).buyIn(BUYIN, { value: BUYIN })
+
+    const tip = ethers.parseEther("0.1")
+    await expect(fantasyContract.connect(addr5).tipCommissioner({ value: tip })).to.be.revertedWithCustomError(fantasyContract, "Fantasy__AddressNotWhitelisted")
+  });
+
+  it("Should not be able to call tipCommissioner() with amount less than 0.001 ether", async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+    const fantasyContractAddress = await factoryContract.connect(commissioner).getFantasyContract(0);
+
+    const FantasyContract = await ethers.getContractFactory("Fantasy");
+    fantasyContract = FantasyContract.attach(fantasyContractAddress) as Fantasy;
+
+    await fantasyContract.connect(commissioner).addToWhitelist(addr1.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr2.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr3.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr4.address);
+
+    await fantasyContract.connect(commissioner).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr1).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr2).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr3).buyIn(BUYIN, { value: BUYIN })
+
+    const tip = ethers.parseEther("0.0001")
+    await expect(fantasyContract.connect(addr4).tipCommissioner({ value: tip })).to.be.revertedWithCustomError(fantasyContract, "Fantasy__TipTooSmall")
+  });
+
+  it("Should be able to call tipCommissioner() and emit an event", async function () {
+    await factoryContract.connect(commissioner).createFantasyContract(BUYIN);
+    const fantasyContractAddress = await factoryContract.connect(commissioner).getFantasyContract(0);
+
+    const FantasyContract = await ethers.getContractFactory("Fantasy");
+    fantasyContract = FantasyContract.attach(fantasyContractAddress) as Fantasy;
+
+    await fantasyContract.connect(commissioner).addToWhitelist(addr1.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr2.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr3.address);
+    await fantasyContract.connect(commissioner).addToWhitelist(addr4.address);
+
+    await fantasyContract.connect(commissioner).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr1).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr2).buyIn(BUYIN, { value: BUYIN })
+    await fantasyContract.connect(addr3).buyIn(BUYIN, { value: BUYIN })
+
+    const tip = ethers.parseEther("0.001")
+    const tipCommisioner = await fantasyContract.connect(addr4).tipCommissioner({ value: tip, gasLimit: 3000000 })
+    await tipCommisioner.wait()
+
+    await expect(tipCommisioner)
+      .to.emit(fantasyContract, "TippedCommissioner")
+      .withArgs(addr4.address, ethers.parseEther(".001"));
+  });
+});
+
 /** TODO
  * tipCommissioner
  */
