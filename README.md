@@ -287,6 +287,28 @@ As the commissioner distributes the prizepool to the players, a player is free t
 - When this function is successfully called, the player winnings will be set to 0 to ensure multiple calls cannot be made
 - This function will transfer the winning value in ether to `msg.sender`
 
+##### `tipCommissioner`
+The owner of the Fantasy contract will have to spend some gas in order to get the season started. For this reason, there is an option for players in the league to send a tip to the commissioner:
+```
+    function tipCommisioner() external payable onlyWhitelisted(msg.sender) {
+        uint256 minValue = 0.001 ether;
+        if (msg.value < minValue) {
+            revert Fantasy__TipTooSmall();
+        }
+
+        (bool success, ) = i_commissioner.call{value: msg.value}("");
+        if (!success) {
+            revert Fantasy__FailedToSendTip();
+        }
+
+        emit TippedCommissioner(msg.sender, msg.value);
+    }
+```
+- Only whitelisted members of the league can call this function
+	- This limitation is not absolutely necessary. 
+	- The step was taken to ensure only members that have been invited to a league can interact with that specific contract.
+- A minimum value of 0.001 ether is required
+
 </details>
 
 <details>
