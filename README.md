@@ -309,6 +309,35 @@ The owner of the Fantasy contract will have to spend some gas in order to get th
 	- The step was taken to ensure only members that have been invited to a league can interact with that specific contract.
 - A minimum value of 0.001 ether is required
 
+##### `completeSeason`
+This function allows a commissioner to "complete" a season after funds have been distributed.  This isn't absolutely necessary, it's just a way to clean up the `s_fantasyContracts` function in `FantasyFactory.sol`
+```
+function completeSeason() external onlyCommissioner {
+	if (s_seasonComplete) {
+		revert Fantasy__SeasonAlreadyComplete();
+	}
+
+	if (address(this).balance != 0) {
+		revert Fantasy__PlayersStillNeedToWithdraw();
+	}
+
+	s_seasonComplete = true;
+	FantasyFactory factory = FantasyFactory(i_factory);
+	factory.removeFantasyContract(msg.sender, i_seasonId);
+
+	emit SeasonCompleted(i_seasonId, msg.sender);
+}
+```
+- Only the commissioner can call this function
+- If the season is already complete,  this function will revert
+- If the contract still has a balance, this function will revert
+- When this function is successfully called:
+	- `s_seasonComplete` boolean is set to true
+	- `i_factory` is used to make a call to the `FantasyFactory` contract
+	- `removeFantasyContract` is called sending two arguments
+		- `msg.sender` is the commissioner's address which will be used in the `s_fantasyContracts` mapping
+		- `i_seasonId` is used to send the season id
+
 </details>
 
 <details>
